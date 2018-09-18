@@ -1,0 +1,14 @@
+{
+    "settings": {
+        "database": {
+            "address": "10.0.0.1",
+            "port": 3306,
+            "username":"root",
+            "passwd":"pass"
+        },
+        "cache": {
+            "address": "10.0.0.2",
+            "port": 6379
+        }
+    }
+}
