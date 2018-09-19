@@ -53,9 +53,18 @@ func logSetting(db *xorm.Engine, status string) {
 func TableInit() {
 	err := db.Sync2(
 		new(BetCluster),
+		new(Gameinfo),
+		new(GamelogError),
+		new(GamelogFish),
+		new(GamelogSlot),
+		new(Platforminfo),
 	)
 
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+func MysqlDB() *xorm.Engine {
+	return db
 }
