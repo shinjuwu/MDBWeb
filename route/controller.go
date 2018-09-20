@@ -2,6 +2,7 @@ package route
 
 import (
 	"MDBWeb/baseinfo"
+	"MDBWeb/model"
 	"MDBWeb/sysconst"
 	"MDBWeb/tool"
 	"encoding/json"
@@ -20,15 +21,15 @@ type CommonHttpPacketCmd struct {
 }
 
 func apolloController(context *gin.Context) {
-
+	DataMsg, Code, PacketCmd := contextAnalysis(context)
 }
 
 func dtController(context *gin.Context) {
-
+	DataMsg, Code, PacketCmd := contextAnalysis(context)
 }
 
 func diosController(context *gin.Context) {
-
+	DataMsg, Code, PacketCmd := contextAnalysis(context)
 }
 
 func contextAnalysis(context *gin.Context) (DataMsg interface{}, Code int, PacketCmd *CommonHttpPacketCmd) {
@@ -80,7 +81,13 @@ func contextAnalysis(context *gin.Context) (DataMsg interface{}, Code int, Packe
 }
 
 func processCMD(context *gin.Context, PacketCmd *CommonHttpPacketCmd, ip string) (DataMsg interface{}, Code int) {
-	switch PacketCmd.Cmd:
-case HTTP_CMD_BET_CLUSTER_GET:
-	
+	switch PacketCmd.Cmd {
+	case sysconst.HTTP_CMD_BET_CLUSTER_GET:
+		return model.GetBetCluster()
+	case sysconst.HTTP_CMD_BET_DETAIL_GET:
+		return model.GetBetDetail()
+	case sysconst.HTTP_CMD_BET_DETAIL_TOTAL_GET:
+		return model.GetBetDetailTotal()
+	}
+
 }
