@@ -46,7 +46,7 @@ func GetBetCluster(cmdData *baseinfo.PacketCmd_BetClusterGet) (DataMsg interface
 	}
 	db := orm.MysqlDB()
 	betClusterList := make([]orm.BetCluster, 0)
-	err := db.Where("ThirdPartyUserID = ? and EndTime >= ? and EndTime <= ?",
+	err := db.Where("ThirdPartyUserID = ? and StartTime >= ? and EndTime <= ?",
 		cmdData.ThirdPartyUserID,
 		cmdData.StartTime,
 		cmdData.EndTime).OrderBy("EndTime").Limit(rowNum, cmdData.StartIndex).Find(&betClusterList)
@@ -89,8 +89,32 @@ func getResBetCluster(list []orm.BetCluster) interface{} {
 	return res
 }
 
-func GetBetDetail() (DataMsg interface{}, Code int) {
+func GetBetDetail(cmdData *baseinfo.PacketCmd_BetDetailGet) (DataMsg interface{}, Code int) {
+	DataMsg = "unknow"
+	Code = int(sysconst.ERROR_CODE_SUCCESS)
+	db := orm.MysqlDB()
+	betCluster := &orm.BetCluster{
+		PlatformID:       cmdData.PlatformID,
+		ServerID:         cmdData.ServerID,
+		ThirdPartyUserID: cmdData.ThirdPartyUserID,
+		ClusterID:        cmdData.ClusterID,
+	}
+	_, err := db.Get(betCluster)
+	if err != nil {
+		panic(err)
+	}
+	gameMode := baseinfo.GetGameMode(betCluster.PlatformID, betCluster.GameID)
+	res := getBetDetailLog(gameMode, betCluster)
 	return nil, 0
+}
+
+func getBetDetailLog(gameMode int8, betCluster *orm.BetCluster) interface{} {
+	switch gameMode {
+	case int8(sysconst.GAME_MODE_FISH):
+		return getFishBetDetail(betCluster)
+	case int8(sysconst.GAME_MODE_SLOT):
+		return getSlotBetDetail(betCluster)
+	}
 }
 
 func GetBetDetailTotal() (DataMsg interface{}, Code int) {

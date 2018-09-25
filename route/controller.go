@@ -83,7 +83,12 @@ func processCMD(context *gin.Context, PacketCmd *CommonHttpPacketCmd, ip string)
 		return model.GetBetCluster(cmdData)
 
 	case sysconst.HTTP_CMD_BET_DETAIL_GET:
-		return model.GetBetDetail()
+		cmdData := &baseinfo.PacketCmd_BetDetailGet{}
+		err := json.Unmarshal([]byte(PacketCmd.Data), cmdData)
+		if err != nil {
+			panic(err)
+		}
+		return model.GetBetDetail(cmdData)
 	case sysconst.HTTP_CMD_BET_DETAIL_TOTAL_GET:
 		return model.GetBetDetailTotal()
 	}

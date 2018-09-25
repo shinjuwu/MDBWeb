@@ -126,3 +126,14 @@ const (
 	HTTP_CMD_BET_DETAIL_TOTAL_GET  = "http_bet_detail_total_get"  // http 取得細單加總資訊(單一遊戲)
 	HTTP_CMD_BET_DETAIL_TOTAL_GET2 = "http_bet_detail_total_get2" // http 取得細單加總資訊(單一玩家)
 )
+
+// 定義遊戲模式
+const (
+	GAME_MODE_NULL     Base = iota // 0 沒有定義
+	GAME_MODE_FISH                 // 1 魚機
+	GAME_MODE_SLOT                 // 2 Slot
+	GAME_MODE_POKER                // 3 撲克牌
+	GAME_MODE_MAHJONG              // 4 麻將
+	GAME_MODE_MINIGAME             // 5 小遊戲
+	GAME_MODE_MAX                  // x 最大值
+)
