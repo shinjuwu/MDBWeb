@@ -6,11 +6,11 @@ import (
 	"github.com/go-xorm/xorm"
 )
 
-type GameInfo baseinfotable
+type GInfo baseinfotable
 
-var GITable GameInfo
+var GITable GInfo
 
-func (t *GameInfo) OnInit(db *xorm.Engine) int {
+func (t *GInfo) OnInit(db *xorm.Engine) int {
 	GITable.Name = "gameinfo"
 	all := make([]orm.Gameinfo, 0)
 	err := db.Find(&all)
@@ -21,4 +21,24 @@ func (t *GameInfo) OnInit(db *xorm.Engine) int {
 		GITable.Data = append(GITable.Data, v)
 	}
 	return len(GITable.Data)
+}
+
+func GetGameNameEN(platformID int, gameID int) string {
+	for _, v := range GITable.Data {
+		data := v.(orm.Gameinfo)
+		if platformID == data.PlatformID && gameID == data.GameID {
+			return data.GameEnName
+		}
+	}
+	return ""
+}
+
+func GetGameMode(platformID int, gameID int) int8 {
+	for _, v := range GITable.Data {
+		data := v.(orm.Gameinfo)
+		if platformID == data.PlatformID && gameID == data.GameID {
+			return int8(data.GameMode)
+		}
+	}
+	return -1
 }

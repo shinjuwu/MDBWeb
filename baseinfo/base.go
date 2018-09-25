@@ -11,7 +11,7 @@ type baseinfotable struct {
 
 func InitialAllTable() {
 	db := orm.MysqlDB()
-	gameinfo := new(GameInfo)
+	gameinfo := new(GInfo)
 	gameinfo.OnInit(db)
 
 	pinfo := new(PInfo)

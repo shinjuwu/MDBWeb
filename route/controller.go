@@ -12,14 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CommonHttpPacketCmd struct {
-	Cmd           string `json:"cmd"`            // 命令種類
-	Sys           string `json:"sys"`            // 是否是 system cmd  ( sys:"game" 遊戲封包 sys:"system" 系統封包)
-	PlatformToken string `json:"platform_token"` // 平台token(跟平台之間的驗證)
-	IsEncode      bool   `json:"isEncode"`       // 是否加密
-	Data          string `json:"data"`           // 封包資料
-}
-
 func apolloController(context *gin.Context) {
 	DataMsg, Code, PacketCmd := contextAnalysis(context)
 }
@@ -83,7 +75,13 @@ func contextAnalysis(context *gin.Context) (DataMsg interface{}, Code int, Packe
 func processCMD(context *gin.Context, PacketCmd *CommonHttpPacketCmd, ip string) (DataMsg interface{}, Code int) {
 	switch PacketCmd.Cmd {
 	case sysconst.HTTP_CMD_BET_CLUSTER_GET:
-		return model.GetBetCluster()
+		cmdData := &baseinfo.PacketCmd_BetClusterGet{}
+		err := json.Unmarshal([]byte(PacketCmd.Data), cmdData)
+		if err != nil {
+			panic(err)
+		}
+		return model.GetBetCluster(cmdData)
+
 	case sysconst.HTTP_CMD_BET_DETAIL_GET:
 		return model.GetBetDetail()
 	case sysconst.HTTP_CMD_BET_DETAIL_TOTAL_GET:
