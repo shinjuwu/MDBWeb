@@ -89,8 +89,6 @@ func processCMD(context *gin.Context, PacketCmd *CommonHttpPacketCmd, ip string)
 			panic(err)
 		}
 		return model.GetBetDetail(cmdData)
-	case sysconst.HTTP_CMD_BET_DETAIL_TOTAL_GET:
-		return model.GetBetDetailTotal()
 	}
-
+	return
 }

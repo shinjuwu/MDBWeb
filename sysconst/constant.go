@@ -121,10 +121,8 @@ const (
 )
 
 const (
-	HTTP_CMD_BET_CLUSTER_GET       = "http_bet_cluster_get"       // http 取得注單資訊
-	HTTP_CMD_BET_DETAIL_GET        = "http_bet_detail_get"        // http 取得細單資訊
-	HTTP_CMD_BET_DETAIL_TOTAL_GET  = "http_bet_detail_total_get"  // http 取得細單加總資訊(單一遊戲)
-	HTTP_CMD_BET_DETAIL_TOTAL_GET2 = "http_bet_detail_total_get2" // http 取得細單加總資訊(單一玩家)
+	HTTP_CMD_BET_CLUSTER_GET = "http_bet_cluster_get" // http 取得注單資訊
+	HTTP_CMD_BET_DETAIL_GET  = "http_bet_detail_get"  // http 取得細單資訊
 )
 
 // 定義遊戲模式

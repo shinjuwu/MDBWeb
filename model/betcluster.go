@@ -105,7 +105,12 @@ func GetBetDetail(cmdData *baseinfo.PacketCmd_BetDetailGet) (DataMsg interface{}
 	}
 	gameMode := baseinfo.GetGameMode(betCluster.PlatformID, betCluster.GameID)
 	res := getBetDetailLog(gameMode, betCluster)
-	return nil, 0
+	bytes, err := json.Marshal(res)
+	if err != nil {
+		panic(err)
+	}
+	DataMsg = string(bytes)
+	return
 }
 
 func getBetDetailLog(gameMode int8, betCluster *orm.BetCluster) interface{} {
@@ -115,8 +120,5 @@ func getBetDetailLog(gameMode int8, betCluster *orm.BetCluster) interface{} {
 	case int8(sysconst.GAME_MODE_SLOT):
 		return getSlotBetDetail(betCluster)
 	}
-}
-
-func GetBetDetailTotal() (DataMsg interface{}, Code int) {
-	return nil, 0
+	return ""
 }
