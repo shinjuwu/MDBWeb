@@ -14,6 +14,15 @@ type CommonHttpPacketCmd struct {
 	Data          string `json:"data"`           // 封包資料
 }
 
+// 共用的回應結構
+type CommonHttpResponseInfo struct {
+	Code    int         `json:"code"`    // 回應的代碼
+	Message string      `json:"message"` // 回應的訊息
+	Ret     string      `json:"ret"`     // 回應的命令種類
+	SN      int         `json:"sn"`      // 回應的SN
+	Data    interface{} `json:"data"`    // 回應的資料
+}
+
 func RegisterRouter() *gin.Engine {
 	router := gin.Default()
 	router.POST(sysconst.THIRD_PARTY_PLATFROM_APOLLO, apolloController)

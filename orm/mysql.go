@@ -58,6 +58,7 @@ func TableInit() {
 		new(GamelogFish),
 		new(GamelogSlot),
 		new(Platforminfo),
+		new(PreprocessLog),
 	)
 
 	if err != nil {

@@ -12,16 +12,48 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var HttpService_SN int = 0 // 回應的SN 累加序號
+
 func apolloController(context *gin.Context) {
+	var HttpResponse CommonHttpResponseInfo
 	DataMsg, Code, PacketCmd := contextAnalysis(context)
+	// 儲存cmd 和 累加sn
+	HttpService_SN++
+	HttpResponse.Ret = PacketCmd.Cmd
+	HttpResponse.SN = HttpService_SN
+
+	// 組合回傳結果
+	HttpResponse.Code = sysconst.ErrorCode[Code].Code
+	HttpResponse.Message = sysconst.ErrorCode[Code].Message
+	HttpResponse.Data = DataMsg
 }
 
 func dtController(context *gin.Context) {
+	var HttpResponse CommonHttpResponseInfo
 	DataMsg, Code, PacketCmd := contextAnalysis(context)
+	// 儲存cmd 和 累加sn
+	HttpService_SN++
+	HttpResponse.Ret = PacketCmd.Cmd
+	HttpResponse.SN = HttpService_SN
+
+	// 組合回傳結果
+	HttpResponse.Code = sysconst.ErrorCode[Code].Code
+	HttpResponse.Message = sysconst.ErrorCode[Code].Message
+	HttpResponse.Data = DataMsg
 }
 
 func diosController(context *gin.Context) {
+	var HttpResponse CommonHttpResponseInfo
 	DataMsg, Code, PacketCmd := contextAnalysis(context)
+	// 儲存cmd 和 累加sn
+	HttpService_SN++
+	HttpResponse.Ret = PacketCmd.Cmd
+	HttpResponse.SN = HttpService_SN
+
+	// 組合回傳結果
+	HttpResponse.Code = sysconst.ErrorCode[Code].Code
+	HttpResponse.Message = sysconst.ErrorCode[Code].Message
+	HttpResponse.Data = DataMsg
 }
 
 func contextAnalysis(context *gin.Context) (DataMsg interface{}, Code int, PacketCmd *CommonHttpPacketCmd) {

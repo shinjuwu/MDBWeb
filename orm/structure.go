@@ -17,7 +17,13 @@ type BetCluster struct {
 	StartTime        time.Time `xorm:"created 'StartTime'"`
 	EndTime          time.Time `xorm:"'EndTime'"`
 	OrderState       byte      `xorm:"notnull default(0) 'OrderState'"`
-	ThirdPartyUserID int64     `xorm:"notnull index 'ThirdPartyUserID'"`
+	ThirdPartyUserID int64     `xorm:"notnull default(0) index 'ThirdPartyUserID'"`
+	Account          string    `xorm:"notnull varchar(45) 'Account'"`
+	Agent            string    `xorm:"notnull varchar(45) 'Agent'"`
+	Currency         string    `xorm:"notnull varchar(45) default('RD') 'Currency'"`
+	RoundID          string    `xorm:"notnull varchar(45) 'RoundID'"`
+	Round            int64     `xorm:"notnull default(0) 'Round'"`
+	IsProcess        byte      `xorm:"notnull default(0) 'IsProcess'"`
 }
 
 type Gameinfo struct {
@@ -89,6 +95,9 @@ type GamelogFish struct {
 	FishType         string    `xorm:"varchar(200) notnull default('0') 'FishType'"`
 	Result           string    `xorm:"varchar(4000) notnull 'Result'"`
 	Memo             string    `xorm:"varchar(100)"`
+	FeatureBet       int64     `xorm:"notnull default(0) 'FeatureBet'"`
+	Currency         string    `xorm:"notnull varchar(45) default('RD') 'Currency'"`
+	FeatureType      int       `xorm:"notnull default(0) 'FeatureType'"`
 }
 
 type GamelogSlot struct {
@@ -119,6 +128,7 @@ type GamelogSlot struct {
 	ClusterID        int64     `xorm:"notnull 'ClusterID'"`
 	ThirdPartyUserID int64     `xorm:"notnull 'ThirdPartyUserID'"`
 	BetID            string    `xorm:"varchar(60) notnull 'BetID'"`
+	Currency         string    `xorm:"notnull varchar(45) default('RD') 'Currency'"`
 }
 
 type Platforminfo struct {
@@ -130,4 +140,19 @@ type Platforminfo struct {
 	IP               string    `xorm:"varchar(100) 'IP'"`
 	PlatformToken    string    `xorm:"varchar(45) 'PlatformToken'"`
 	TokenUpdateTime  time.Time `xorm:"'TokenUpdateTime'"`
+}
+
+type PreprocessLog struct {
+	ID              int64  `xorm:"pk notnull autoincr"`
+	ClusterID       int64  `xorm:"notnull 'ClusterID'"`
+	RoundID         string `xorm:"notnull varchar(45) 'RoundID'"`
+	WinOdds         int    `xorm:"notnull default(0) 'WinOdds'"`
+	FeatureType     int    `xorm:"notnull default(0)"`
+	FishType        string `xorm:"varchar(200) notnull default('0') 'FishType'"`
+	Result          string `xorm:"varchar(100) notnull 'Result'"`
+	TotalFeatureBet int64  `xorm:"notnull default(0) 'TotalFeatureBet'"`
+	TotalRound      int64  `xorm:"notnull default(0) 'TotalRound'"`
+	TotalBet        int64  `xorm:"notnull default(0) 'TotalBet'"`
+	TotalWin        int64  `xorm:"notnull default(0) 'TotalWin'"`
+	FishNO          string `xorm:"notnull varchar(11) default(0) 'FishNO'"`
 }
