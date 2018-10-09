@@ -1,7 +1,11 @@
 package tool
 
 import (
+	"bytes"
+	"compress/zlib"
+	"encoding/base64"
 	"errors"
+	"io"
 	"reflect"
 )
 
@@ -22,4 +26,23 @@ func Contain(obj interface{}, target interface{}) (bool, error) {
 	}
 
 	return false, errors.New("not in array")
+}
+
+//进行zlib解压缩 + base64Decode, 輸入string 輸出 string
+func DoZlibUnCompressGetString(Str string) string {
+	compressSrc, err := base64.StdEncoding.DecodeString(Str)
+	if err != nil {
+		return ""
+	}
+	b := bytes.NewReader(compressSrc)
+	var out bytes.Buffer
+	r, err := zlib.NewReader(b)
+	if err != nil {
+		return ""
+	}
+	io.Copy(&out, r)
+
+	// 輸出
+	OutStr := string(out.Bytes())
+	return OutStr
 }

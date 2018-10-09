@@ -154,5 +154,5 @@ type PreprocessLog struct {
 	TotalRound      int64  `xorm:"notnull default(0) 'TotalRound'"`
 	TotalBet        int64  `xorm:"notnull default(0) 'TotalBet'"`
 	TotalWin        int64  `xorm:"notnull default(0) 'TotalWin'"`
-	FishNO          string `xorm:"notnull varchar(11) default(0) 'FishNO'"`
+	FishID          string `xorm:"notnull varchar(11) default(0) 'FishID'"`
 }
