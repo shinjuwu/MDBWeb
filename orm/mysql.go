@@ -2,6 +2,7 @@ package orm
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
@@ -13,19 +14,43 @@ import (
 )
 
 var db *xorm.Engine
-var conf map[string]interface{}
+var Conf settings
+
+type database struct {
+	DBName   string `json:"dbname"`
+	Address  string `json:"address"`
+	Port     int    `json:"port"`
+	UserName string `json:"username"`
+	Passwd   string `json:"passwd"`
+}
+type pinterval struct {
+	Time int `json:"time"`
+}
+type data struct {
+	Database        database  `json:"database"`
+	ProcessInterval pinterval `json:"processInterval"`
+}
+
+type settings struct {
+	Setting data `json:"settings"`
+}
 
 func init() {
 	config.Load(file.NewSource(
 		file.WithPath("./config/config.json"),
 	))
-	conf = config.Map()
+	config.Scan(&Conf)
 }
 
 func OpenDB() {
 	fmt.Println("mysqldb->Open DB")
-
-	connStr := "root:pass@tcp(127.0.0.1:3306)/one1cloud_main?parseTime=true"
+	username := Conf.Setting.Database.UserName
+	passwd := Conf.Setting.Database.Passwd
+	ipaddr := Conf.Setting.Database.Address
+	port := Conf.Setting.Database.Port
+	dbName := Conf.Setting.Database.DBName
+	//connStr := "root:pass@tcp(127.0.0.1:3306)/one1cloud_main?parseTime=true"
+	connStr := username + ":" + passwd + "@tcp(" + ipaddr + ":" + strconv.Itoa(port) + ")/" + dbName + "?parseTime=true"
 	var err error
 	db, err = xorm.NewEngine("mysql", connStr)
 	if err != nil {
@@ -36,7 +61,7 @@ func OpenDB() {
 	cacher := xorm.NewLRUCacher(xorm.NewMemoryStore(), 1000)
 	db.SetDefaultCacher(cacher)
 
-	logSetting(db, "debug")
+	logSetting(db, "Release")
 }
 
 func logSetting(db *xorm.Engine, status string) {

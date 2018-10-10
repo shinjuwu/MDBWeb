@@ -1,0 +1,3 @@
+start ./MDBWeb.exe
+
+pause

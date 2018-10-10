@@ -26,23 +26,28 @@ type SaveGameLog_Fish_Feature_Hit struct {
 }
 
 func ProcessCQ9Log() error {
-	fmt.Println("Process CQ9 Log")
+	fmt.Println("Process CQ9 Log-start")
 	db := orm.MysqlDB()
 	betClusterList := make([]orm.BetCluster, 0)
-	err := db.Where("IsProcess = ?", 0).Find(&betClusterList)
+	err := db.Where("IsProcess = ?", 0).And("RoundID <> ?", "").Find(&betClusterList)
+	//err := db.Where("IsProcess = ?", 0).And("ClusterID = ?", 112).Find(&betClusterList)
 	if err != nil {
 		panic("get betcluster failed!")
 	}
 
 	for _, v := range betClusterList {
 		createPreprocessLog(&v)
+		setProcessed(&v)
 	}
+	fmt.Println("Process CQ9 Log-End")
 	return nil
 }
 
 func createPreprocessLog(data *orm.BetCluster) {
 	db := orm.MysqlDB()
-	sql := "SELECT WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round) FROM `gamelog_fish` GROUP BY WinOdds,FeatureType,FishType"
+	sql := "SELECT WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round) FROM `gamelog_fish` WHERE ClusterID=" +
+		strconv.Itoa(int(data.ClusterID)) + " GROUP BY WinOdds,FeatureType,FishType"
+	//sql := "SELECT ClusterID,WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round) FROM `gamelog_fish` WHERE ClusterID=112 GROUP BY WinOdds,FeatureType,FishType"
 	results, err := db.Query(sql)
 	if err != nil {
 		panic("query fish log failed")
@@ -67,9 +72,14 @@ func createPreprocessLog(data *orm.BetCluster) {
 			TotalBet:        int64(totalBet),
 			TotalWin:        int64(totalWin),
 		}
-		fishs := strings.Split(",", processLog.FishType)
+		if processLog.FishType == "" {
+			continue
+		}
+		processLog.FishType = strings.TrimLeft(processLog.FishType, "[")
+		processLog.FishType = strings.TrimRight(processLog.FishType, "]")
+		fishs := strings.Split(processLog.FishType, ",")
 		if len(fishs) == 1 {
-			processLog.FishID = processLog.FishType //TOD 轉int
+			processLog.FishID = processLog.FishType
 			_, err := db.Insert(processLog)
 			if err != nil {
 				panic("Insert into preprocessLog failed!")
@@ -79,7 +89,7 @@ func createPreprocessLog(data *orm.BetCluster) {
 		}
 	}
 	insertFeatureLog(fretureLogs)
-	fmt.Println(results)
+	//fmt.Println(results)
 }
 
 //統計results的魚得分資料
@@ -90,27 +100,27 @@ func processFeatureLog(log *orm.PreprocessLog, featureLogs map[int]map[int]orm.P
 	if err != nil {
 		panic("Json Umarshal failed!")
 	}
-	fLogBywinodds := map[int]orm.PreprocessLog{}
+	var fLogBywinodds map[int]orm.PreprocessLog
 	var ok bool
 	if fLogBywinodds, ok = featureLogs[log.WinOdds]; !ok {
-		featureLogs[log.WinOdds] = map[int]orm.PreprocessLog{}
+		featureLogs[log.WinOdds] = make(map[int]orm.PreprocessLog)
+		fLogBywinodds = make(map[int]orm.PreprocessLog)
 	}
 	for _, v := range result.Kill_info {
 		if v.Status == 1 {
 			preLog := orm.PreprocessLog{}
-			if preLog, ok = fLogBywinodds[v.Fish_id]; !ok {
-				fLogBywinodds[v.Fish_id] = orm.PreprocessLog{}
-				log.FishID = strconv.Itoa(v.Fish_id)
-				fLogBywinodds[v.Fish_id] = *log
+			if preLog, ok = fLogBywinodds[v.Fish_Type]; !ok {
+				log.FishID = strconv.Itoa(v.Fish_Type)
+				fLogBywinodds[v.Fish_Type] = *log
 			} else {
 				preLog.TotalFeatureBet = preLog.TotalFeatureBet + log.TotalFeatureBet
 				preLog.TotalWin = preLog.TotalWin + v.Win
-				fLogBywinodds[v.Fish_id] = preLog
+				fLogBywinodds[v.Fish_Type] = preLog
 			}
 		}
 	}
 	featureLogs[log.WinOdds] = fLogBywinodds
-	fmt.Println(featureLogs)
+	//fmt.Println(featureLogs)
 }
 
 func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
@@ -122,5 +132,14 @@ func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
 				panic("Insert log to preprocessLog failed!")
 			}
 		}
+	}
+}
+
+func setProcessed(log *orm.BetCluster) {
+	db := orm.MysqlDB()
+	sql := "UPDATE bet_cluster SET IsProcess=1 WHERE ClusterID=" + strconv.Itoa(int(log.ClusterID))
+	_, err := db.Query(sql)
+	if err != nil {
+		panic("Set processed failed!")
 	}
 }

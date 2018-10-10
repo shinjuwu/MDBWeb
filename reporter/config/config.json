@@ -1,0 +1,14 @@
+{
+    "settings": {
+        "database": {
+            "dbname":"one1cloud_main",
+            "address": "127.0.0.1",
+            "port": 3306,
+            "username":"root",
+            "passwd":"pass"
+        },
+        "processInterval": {
+            "time": 300
+        }
+    }
+}
