@@ -3,8 +3,9 @@ package sysconst
 // ThirdPartyPlatfrom
 const (
 	THIRD_PARTY_PLATFROM_APOLLO = "/ThirdPartyPlatfrom/Apollo" // http 第三方平台過來的資料 (阿波羅)
-	THIRD_PARTY_PLATFROM_DT     = "/ThirdPartyPlatfrom/Dt"     // http 第三方平台過來的資料 (阿波羅)
-	THIRD_PARTY_PLATFROM_DIOS   = "/ThirdPartyPlatfrom/Dios"   // http 第三方平台過來的資料 (阿波羅)
+	THIRD_PARTY_PLATFROM_DT     = "/ThirdPartyPlatfrom/Dt"
+	THIRD_PARTY_PLATFROM_DIOS   = "/ThirdPartyPlatfrom/Dios"
+	THIRD_PARTY_PLATFROM_CQ9    = "/ThirdPartyPlatfrom/Cq9"
 )
 
 // 錯誤代碼

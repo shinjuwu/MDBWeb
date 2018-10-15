@@ -4,7 +4,6 @@ import (
 	"MDBWeb/baseinfo"
 	"MDBWeb/orm"
 	"MDBWeb/sysconst"
-	"MDBWeb/tool"
 	"encoding/json"
 )
 
@@ -37,58 +36,6 @@ type ResponseInfo_BetClusterGet struct {
 	BetClusters []BetCluster `json:"bet_clusters"` // list of bet cluster
 }
 
-func GetBetCluster(cmdData *baseinfo.PacketCmd_BetClusterGet) (DataMsg interface{}, Code int) {
-	DataMsg = "unknow"
-	Code = int(sysconst.ERROR_CODE_SUCCESS)
-	rowNum := cmdData.RowNum
-	if rowNum > 100 {
-		rowNum = 100
-	}
-	db := orm.MysqlDB()
-	betClusterList := make([]orm.BetCluster, 0)
-	err := db.Where("ThirdPartyUserID = ? and StartTime >= ? and EndTime <= ?",
-		cmdData.ThirdPartyUserID,
-		cmdData.StartTime,
-		cmdData.EndTime).OrderBy("EndTime").Limit(rowNum, cmdData.StartIndex).Find(&betClusterList)
-	if err != nil {
-		panic(err)
-	}
-	res := getResBetCluster(betClusterList)
-	bytes, err := json.Marshal(res)
-	if err != nil {
-		panic(err)
-	}
-	DataMsg = string(bytes)
-	return
-}
-
-func getResBetCluster(list []orm.BetCluster) interface{} {
-	res := ResponseInfo_BetClusterGet{}
-	res.DataCount = len(list)
-	for _, v := range list {
-		betCluster := BetCluster{
-			ClusterID:        v.ClusterID,
-			ServerID:         v.ServerID,
-			PlatformID:       v.PlatformID,
-			MemberCode:       v.MemberCode,
-			AgentID:          v.AgentID,
-			LobbyID:          int(v.LobbyID),
-			GameID:           v.GameID,
-			GameName:         baseinfo.GetGameNameEN(v.PlatformID, v.GameID),
-			GameMode:         baseinfo.GetGameMode(v.PlatformID, v.GameID),
-			User_ID:          v.UserID,
-			Bet:              tool.ConvertPrecision(v.Bet),
-			Win:              tool.ConvertPrecision(v.Win),
-			WinLose:          tool.ConvertPrecision(v.WinLose),
-			StartTime:        v.StartTime.String(),
-			EndTime:          v.EndTime.String(),
-			ThirdPartyUserID: v.ThirdPartyUserID,
-		}
-		res.BetClusters = append(res.BetClusters, betCluster)
-	}
-	return res
-}
-
 func GetBetDetail(cmdData *baseinfo.PacketCmd_BetDetailGet) (DataMsg interface{}, Code int) {
 	DataMsg = "unknow"
 	Code = int(sysconst.ERROR_CODE_SUCCESS)
@@ -116,6 +63,9 @@ func GetBetDetail(cmdData *baseinfo.PacketCmd_BetDetailGet) (DataMsg interface{}
 func getBetDetailLog(gameMode int8, betCluster *orm.BetCluster) interface{} {
 	switch gameMode {
 	case int8(sysconst.GAME_MODE_FISH):
+		if betCluster.PlatformID == 100 { //TODO:CQ9特例，暫時放這裡，等有比較好的分類法時再換地方
+			return getFishBetDetailForCQ9(betCluster)
+		}
 		return getFishBetDetail(betCluster)
 	case int8(sysconst.GAME_MODE_SLOT):
 		return getSlotBetDetail(betCluster)

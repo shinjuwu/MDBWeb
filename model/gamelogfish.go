@@ -51,6 +51,37 @@ type ResponseInfo_BetDetailFishGet struct {
 	BetDetails []BackstageGameLog_Fish `json:"gamelogList"` // list of bet detail
 }
 
+//CQ9細單
+type ResInfoBetDetailFishGetForCQ9 struct {
+	BetDetail []FishDetailLogCQ9 `json:"gamelogList"`
+}
+
+type FishDetailLogCQ9 struct {
+	RoundID   string        `json:"tid"`       //單號
+	StartTime string        `json:"startTime"` //開始時間
+	EndTime   string        `json:"endTime"`   //結束時間
+	Agent     string        `json:"agent"`     //代理商
+	Account   string        `json:"account"`   //玩家帳號
+	Currency  string        `json:"currency"`  //幣別
+	Round     int64         `json:"round"`     //總局數
+	Bet       int64         `json:"bet"`       //總壓分
+	Win       int64         `json:"win"`       //總贏分
+	WinLose   int64         `json:"winLose"`   //總輸贏
+	GameLog   []FishGameLog `json:"gameLog"`   //遊戲紀錄
+}
+
+type FishGameLog struct {
+	FeatureType     int   `json:"featureType"`      //道具種類
+	WinOdds         int   `json:"winOdds"`          //押注額
+	FishType        int   `json:"fishType"`         //魚種
+	TotalBet        int64 `json:"totalBet"`         //總押注
+	TotalFeatureBet int64 `json:"totalFeatureBet"`  //總道具押注
+	TotalWin        int64 `json:"totalWin"`         //總贏分
+	TotalRound      int64 `json:"totalRound"`       //總局數
+	DisConTimes     int64 `json:"disconnectTimes"`  //斷線次數
+	DisConSettle    int64 `json:"disconnectSettle"` //斷線結清
+}
+
 func getFishBetDetail(betCluster *orm.BetCluster) *ResponseInfo_BetDetailFishGet {
 	db := orm.MysqlDB()
 	gamelogFish := make([]orm.GamelogFish, 0)
@@ -102,5 +133,21 @@ func getResGamelogFish(list []orm.GamelogFish) *ResponseInfo_BetDetailFishGet {
 		}
 		res.BetDetails = append(res.BetDetails, betDetail)
 	}
+	return res
+}
+
+func getFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResponseInfo_BetDetailFishGet {
+	db := orm.MysqlDB()
+	gamelogFish := make([]orm.GamelogFish, 0)
+	err := db.Where("PlatformID = ? and ServerID = ? and ThirdPartyUserID = ? and ClusterID = ?",
+		betCluster.PlatformID,
+		betCluster.ServerID,
+		betCluster.ThirdPartyUserID,
+		betCluster.ClusterID).OrderBy("CreateTime").Find(&gamelogFish)
+	if err != nil {
+		panic(err)
+	}
+
+	res := getResGamelogFish(gamelogFish)
 	return res
 }
