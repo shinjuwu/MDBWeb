@@ -36,9 +36,24 @@ func diosController(context *gin.Context) {
 }
 
 func cq9Controller(context *gin.Context) {
-	httpResponse := contextAnalysis(context)
+	reponse := getOrderInfo(context)
 
-	sendMessage(context, httpResponse)
+	sendMessageCQ9(context, reponse)
+}
+
+func sendMessageCQ9(context *gin.Context, reponse interface{}) {
+	//去斜線
+	s, ok := reponse.(string)
+	if ok {
+		rawData := json.RawMessage(s)
+		reponse = rawData
+	}
+	dataMsgByte, err := json.Marshal(reponse)
+	if err != nil {
+		panic("httpResponse json encode failed")
+	}
+
+	context.String(http.StatusOK, string(dataMsgByte))
 }
 
 func sendMessage(context *gin.Context, httpReponse *CommonHttpResponseInfo) {
@@ -56,6 +71,15 @@ func sendMessage(context *gin.Context, httpReponse *CommonHttpResponseInfo) {
 	context.String(http.StatusOK, string(dataMsgByte))
 }
 
+func getOrderInfo(context *gin.Context) interface{} {
+	token := context.Param("token")
+	detailInfo := getDetailOrderInfo(token)
+	betCluster := model.GetBetCluster(detailInfo.Data.RoundID)
+	ResFishBetInfo := model.GetFishBetDetailForCQ9(betCluster)
+	return ResFishBetInfo
+}
+
+//Applo平台頁面解析
 func contextAnalysis(context *gin.Context) *CommonHttpResponseInfo {
 	var Code int
 	var PacketCmd *CommonHttpPacketCmd
@@ -155,12 +179,55 @@ type DetailStatus struct {
 	Date    string `json:"datetime"`
 }
 
-func getDetailToken() error {
+// func getDetailToken() error {
+// 	v := url.Values{}
+// 	v.Set("gamecode", "AP01")
+// 	v.Set("roundid", "AP01-10001-8-23229-1054")
+// 	form_body := ioutil.NopCloser(strings.NewReader(v.Encode()))
+// 	req, err := http.NewRequest("GET", "http://api.cqgame.games/dev/peace/detailtoken", form_body)
+// 	if err != nil {
+// 		panic("error")
+// 	}
+// 	req.Header.Set("Authorization", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnYW1laGFsbCI6ImNxOSIsInRlYW0iOiJBUCIsImp0aSI6IjUyODM4NDU1MyIsImlhdCI6MTUzNTk2NDM1OSwiaXNzIjoiQ3lwcmVzcyIsInN1YiI6IkdTVG9rZW4ifQ.OtEO9IT3ZgmeM0Kp_fjYE-MaAtGQyGFPLwvDBwbPQCI")
+// 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+// 	client := &http.Client{}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		panic("error")
+// 	}
+// 	defer resp.Body.Close()
+
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		panic("error")
+// 	}
+// 	res := TokenDetailRes{}
+// 	err = json.Unmarshal(body, &res)
+// 	if err != nil {
+// 		panic("error")
+// 	}
+// 	return nil
+// }
+
+type ResDetailOrder struct {
+	Data   OrderInfo    `json:"data"`
+	Status DetailStatus `json:"status"`
+}
+
+type OrderInfo struct {
+	RoundID  string `json:"roundid"`
+	Account  string `json:"account"`
+	ID       string `json:"id"`
+	Gametype string `json:"gametype"`
+	Paccount string `json:"paccount"`
+}
+
+//Cq9限定，未來有其他平台有類似機制再重購
+func getDetailOrderInfo(token string) *ResDetailOrder {
 	v := url.Values{}
-	v.Set("gamecode", "AP01")
-	v.Set("roundid", "AP01-10001-8-23229-1054")
-	form_body := ioutil.NopCloser(strings.NewReader(v.Encode()))
-	req, err := http.NewRequest("GET", "http://api.cqgame.games/dev/peace/detailtoken", form_body)
+	v.Set("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnYW1ldHlwZSI6ImZpc2giLCJwbGF5ZXJpZCI6IjVhMGE5NTU5YjY5NDVjMDAwMThhZTM1NCIsInBhY2NvdW50IjoicWFyZDMiLCJhY2NvdW50IjoidGVzdDcwNjMiLCJyb3VuZGlkIjoiQVAwMS0xMDAwMS04LTIzMjI5LTEwNTQiLCJleHAiOjE1Mzk3NTc2MTAsImp0aSI6IjkxODkzNzQ0NyIsImlhdCI6MTUzOTc1NzAxMCwiaXNzIjoiQ3lwcmVzcyIsInN1YiI6IlJvdW5kVG9rZW4ifQ.nQCr1BIpewTRtkJmyPSSFHDDD5Phv5e3pXEEuo-PyvM")
+	formBody := ioutil.NopCloser(strings.NewReader(v.Encode()))
+	req, err := http.NewRequest("POST", "http://api.cqgame.games/gamepool/cq9/game/detailtoken", formBody)
 	if err != nil {
 		panic("error")
 	}
@@ -177,10 +244,10 @@ func getDetailToken() error {
 	if err != nil {
 		panic("error")
 	}
-	res := TokenDetailRes{}
+	res := ResDetailOrder{}
 	err = json.Unmarshal(body, &res)
 	if err != nil {
 		panic("error")
 	}
-	return nil
+	return &res
 }
