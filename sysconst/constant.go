@@ -3,8 +3,9 @@ package sysconst
 // ThirdPartyPlatfrom
 const (
 	THIRD_PARTY_PLATFROM_APOLLO = "/ThirdPartyPlatfrom/Apollo" // http 第三方平台過來的資料 (阿波羅)
-	THIRD_PARTY_PLATFROM_DT     = "/ThirdPartyPlatfrom/Dt"     // http 第三方平台過來的資料 (阿波羅)
-	THIRD_PARTY_PLATFROM_DIOS   = "/ThirdPartyPlatfrom/Dios"   // http 第三方平台過來的資料 (阿波羅)
+	THIRD_PARTY_PLATFROM_DT     = "/ThirdPartyPlatfrom/Dt"
+	THIRD_PARTY_PLATFROM_DIOS   = "/ThirdPartyPlatfrom/Dios"
+	THIRD_PARTY_PLATFROM_CQ9    = "/cq9/detail"
 )
 
 // 錯誤代碼
@@ -250,3 +251,21 @@ var ErrorCode = [ERROR_CODE_MAX]CommonCodeInfo{
 	{-int(ERROR_CODE_ERROR_BETLINE_MULTIPLIER), "押注額與線數不符", int(ERROR_DO_SOMETHING_DISCONNECT)},
 	{-int(ERROR_CODE_DT_TOKEN_OUTDATE), "游戏TOKEN过期", int(ERROR_DO_SOMETHING_DISCONNECT)},
 }
+
+const (
+	FISH_PROCESS_STATUS_UNKNOW                  Base = iota // 0 未知的狀態
+	FISH_PROCESS_STATUS_ENTER_GAME                          // 1 魚機-進入遊戲
+	FISH_PROCESS_STATUS_EXIT_GAME                           // 2 魚機-離開遊戲
+	FISH_PROCESS_STATUS_SHOOT                               // 3 魚機-射擊
+	FISH_PROCESS_STATUS_SHOOT_CANCAL                        // 4 魚機-射擊取消(子彈還在飛, 就離開遊戲)
+	FISH_PROCESS_STATUS_HIT                                 // 5 魚機-子彈擊中魚
+	FISH_PROCESS_STATUS_HIT_CANCAL_ALREADY_DIED             // 6 魚機-子彈擊中魚(取消射擊-兩發子彈打中同一隻)
+	FISH_PROCESS_STATUS_HIT_CANCAL_NOT_FOUND                // 7 魚機-子彈擊中魚(取消射擊-找不到魚)  可能server讓魚死了, 但是client端還送打中他的封包
+	FISH_PROCESS_STATUS_FEATURE_SHOOT                       // 8 魚機-特殊射擊(道具)
+	FISH_PROCESS_STATUS_FEATURE_SHOOT_CANCAL                // 9 魚機-特殊射擊(道具)
+	FISH_PROCESS_STATUS_FEATURE_HIT                         // 10 魚機-特殊子彈擊中魚(道具)
+	FISH_PROCESS_STATUS_FEATURE_HIT_CANCAL                  // 11 魚機-特殊子彈擊中魚(道具)(取消射擊)
+	FISH_PROCESS_STATUS_DISCONNECT_SETTLEMENT               // 12 魚機-斷線結清 拿到道具確斷線
+	FISH_PROCESS_STATUS_HIT_DIE                             // 13 魚機-子彈擊死魚
+	FISH_PROCESS_STATUS_FEATURE_HIT_DIE                     // 14 魚機-特殊子彈擊死魚
+)

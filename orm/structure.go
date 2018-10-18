@@ -155,4 +155,6 @@ type PreprocessLog struct {
 	TotalBet        int64  `xorm:"notnull default(0) 'TotalBet'"`
 	TotalWin        int64  `xorm:"notnull default(0) 'TotalWin'"`
 	FishID          string `xorm:"notnull varchar(200) default(0) 'FishID'"`
+	DisConTimes     int64  `xorm:"notnull default(0)"`
+	DisConSettle    int64  `xorm:"notnull default(0)"`
 }
