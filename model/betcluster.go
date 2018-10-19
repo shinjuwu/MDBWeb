@@ -63,9 +63,6 @@ func GetBetDetail(cmdData *baseinfo.PacketCmd_BetDetailGet) (DataMsg interface{}
 func getBetDetailLog(gameMode int8, betCluster *orm.BetCluster) interface{} {
 	switch gameMode {
 	case int8(sysconst.GAME_MODE_FISH):
-		if betCluster.PlatformID == 100 { //TODO:CQ9特例，暫時放這裡，等有比較好的分類法時再換地方
-			return getFishBetDetailForCQ9(betCluster)
-		}
 		return getFishBetDetail(betCluster)
 	case int8(sysconst.GAME_MODE_SLOT):
 		return getSlotBetDetail(betCluster)

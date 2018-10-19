@@ -79,6 +79,25 @@ func getOrderInfo(context *gin.Context) interface{} {
 	return ResFishBetInfo
 }
 
+func checkIP(context *gin.Context, platformID int) (msg string, code int) {
+	clientIP := context.Request.RemoteAddr
+	ipStr := strings.Split(clientIP, ":")
+	IP := ipStr[0]
+	isGet, platform := baseinfo.GetPlatformInfo(platformID)
+	if isGet == false {
+		Code = int(sysconst.ERROR_CODE_ERROR_AUTH_PLATFORM)
+		msg = ""
+		return
+	}
+
+	ipList := strings.Split(platform.IP, ",")
+	if ipCheck, _ := tool.Contain(ipList, IP); !ipCheck {
+		Code = int(sysconst.ERROR_CODE_ERROR_AUTH_PLATFORM_IP)
+		DataMsg = ""
+		return
+	}
+}
+
 //Applo平台頁面解析
 func contextAnalysis(context *gin.Context) *CommonHttpResponseInfo {
 	var Code int
@@ -178,36 +197,6 @@ type DetailStatus struct {
 	Message string `json:"message"`
 	Date    string `json:"datetime"`
 }
-
-// func getDetailToken() error {
-// 	v := url.Values{}
-// 	v.Set("gamecode", "AP01")
-// 	v.Set("roundid", "AP01-10001-8-23229-1054")
-// 	form_body := ioutil.NopCloser(strings.NewReader(v.Encode()))
-// 	req, err := http.NewRequest("GET", "http://api.cqgame.games/dev/peace/detailtoken", form_body)
-// 	if err != nil {
-// 		panic("error")
-// 	}
-// 	req.Header.Set("Authorization", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnYW1laGFsbCI6ImNxOSIsInRlYW0iOiJBUCIsImp0aSI6IjUyODM4NDU1MyIsImlhdCI6MTUzNTk2NDM1OSwiaXNzIjoiQ3lwcmVzcyIsInN1YiI6IkdTVG9rZW4ifQ.OtEO9IT3ZgmeM0Kp_fjYE-MaAtGQyGFPLwvDBwbPQCI")
-// 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-// 	client := &http.Client{}
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		panic("error")
-// 	}
-// 	defer resp.Body.Close()
-
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		panic("error")
-// 	}
-// 	res := TokenDetailRes{}
-// 	err = json.Unmarshal(body, &res)
-// 	if err != nil {
-// 		panic("error")
-// 	}
-// 	return nil
-// }
 
 type ResDetailOrder struct {
 	Data   OrderInfo    `json:"data"`
