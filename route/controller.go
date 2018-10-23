@@ -72,7 +72,7 @@ func sendMessage(context *gin.Context, httpReponse *CommonHttpResponseInfo) {
 }
 
 func getOrderInfo(context *gin.Context) interface{} {
-	token := context.Param("token")
+	token := context.Query("token")
 	detailInfo := getDetailOrderInfo(token)
 	betCluster := model.GetBetCluster(detailInfo.Data.RoundID)
 	ResFishBetInfo := model.GetFishBetDetailForCQ9(betCluster)
@@ -85,17 +85,18 @@ func checkIP(context *gin.Context, platformID int) (msg string, code int) {
 	IP := ipStr[0]
 	isGet, platform := baseinfo.GetPlatformInfo(platformID)
 	if isGet == false {
-		Code = int(sysconst.ERROR_CODE_ERROR_AUTH_PLATFORM)
+		code = int(sysconst.ERROR_CODE_ERROR_AUTH_PLATFORM)
 		msg = ""
 		return
 	}
 
 	ipList := strings.Split(platform.IP, ",")
 	if ipCheck, _ := tool.Contain(ipList, IP); !ipCheck {
-		Code = int(sysconst.ERROR_CODE_ERROR_AUTH_PLATFORM_IP)
-		DataMsg = ""
+		code = int(sysconst.ERROR_CODE_ERROR_AUTH_PLATFORM_IP)
+		msg = ""
 		return
 	}
+	return
 }
 
 //Applo平台頁面解析
@@ -214,7 +215,7 @@ type OrderInfo struct {
 //Cq9限定，未來有其他平台有類似機制再重購
 func getDetailOrderInfo(token string) *ResDetailOrder {
 	v := url.Values{}
-	v.Set("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnYW1ldHlwZSI6ImZpc2giLCJwbGF5ZXJpZCI6IjVhMGE5NTU5YjY5NDVjMDAwMThhZTM1NCIsInBhY2NvdW50IjoicWFyZDMiLCJhY2NvdW50IjoidGVzdDcwNjMiLCJyb3VuZGlkIjoiQVAwMS0xMDAwMS04LTIzMjI5LTEwNTQiLCJleHAiOjE1Mzk3NTc2MTAsImp0aSI6IjkxODkzNzQ0NyIsImlhdCI6MTUzOTc1NzAxMCwiaXNzIjoiQ3lwcmVzcyIsInN1YiI6IlJvdW5kVG9rZW4ifQ.nQCr1BIpewTRtkJmyPSSFHDDD5Phv5e3pXEEuo-PyvM")
+	v.Set("token", token)
 	formBody := ioutil.NopCloser(strings.NewReader(v.Encode()))
 	req, err := http.NewRequest("POST", "http://api.cqgame.games/gamepool/cq9/game/detailtoken", formBody)
 	if err != nil {

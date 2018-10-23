@@ -26,9 +26,13 @@ type database struct {
 type pinterval struct {
 	Time int `json:"time"`
 }
+type serve struct {
+	Port int `json:"port"`
+}
 type data struct {
 	Database        database  `json:"database"`
 	ProcessInterval pinterval `json:"processInterval"`
+	Serve           serve     `json:"serve"`
 }
 
 type settings struct {
@@ -61,7 +65,7 @@ func OpenDB() {
 	cacher := xorm.NewLRUCacher(xorm.NewMemoryStore(), 1000)
 	db.SetDefaultCacher(cacher)
 
-	logSetting(db, "Release")
+	logSetting(db, "release")
 }
 
 func logSetting(db *xorm.Engine, status string) {

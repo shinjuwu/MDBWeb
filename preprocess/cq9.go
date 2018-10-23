@@ -43,16 +43,19 @@ func ProcessCQ9Log() error {
 	return nil
 }
 
+//var count int
+
 func createPreprocessLog(data *orm.BetCluster) {
 	db := orm.MysqlDB()
-	sql := "SELECT WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round) FROM `gamelog_fish` WHERE ClusterID=" +
-		strconv.Itoa(int(data.ClusterID)) + " GROUP BY WinOdds,FeatureType,FishType"
+	sql := "SELECT WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round),Process_Status FROM `gamelog_fish` WHERE ClusterID=" +
+		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=12 or Process_Status=13 or Process_Status=14) GROUP BY WinOdds,FeatureType,FishType,Process_Status"
 	//sql := "SELECT ClusterID,WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round) FROM `gamelog_fish` WHERE ClusterID=112 GROUP BY WinOdds,FeatureType,FishType"
 	results, err := db.Query(sql)
 	if err != nil {
 		panic("query fish log failed")
 	}
 	fretureLogs := map[int]map[int]orm.PreprocessLog{} //map[winadd]map[fishID]log
+
 	for _, v := range results {
 		winodds, _ := strconv.Atoi(string(v["WinOdds"]))
 		featureType, _ := strconv.Atoi(string(v["FeatureType"]))
@@ -60,6 +63,7 @@ func createPreprocessLog(data *orm.BetCluster) {
 		totalRound, _ := strconv.Atoi(string(v["SUM(Round)"]))
 		totalBet, _ := strconv.Atoi(string(v["SUM(Bet)"]))
 		totalWin, _ := strconv.Atoi(string(v["SUM(Bet_Win)"]))
+		processStatus, _ := strconv.Atoi(string(v["Process_Status"]))
 		processLog := orm.PreprocessLog{
 			ClusterID:       data.ClusterID,
 			RoundID:         data.RoundID,
@@ -71,6 +75,7 @@ func createPreprocessLog(data *orm.BetCluster) {
 			TotalRound:      int64(totalRound),
 			TotalBet:        int64(totalBet),
 			TotalWin:        int64(totalWin),
+			ProcessStatus:   processStatus,
 		}
 		if processLog.FishType == "" {
 			continue
@@ -78,12 +83,15 @@ func createPreprocessLog(data *orm.BetCluster) {
 		processLog.FishType = strings.TrimLeft(processLog.FishType, "[")
 		processLog.FishType = strings.TrimRight(processLog.FishType, "]")
 		fishs := strings.Split(processLog.FishType, ",")
+
 		if len(fishs) == 1 {
 			processLog.FishID = processLog.FishType
 			_, err := db.Insert(processLog)
 			if err != nil {
 				panic("Insert into preprocessLog failed!")
 			}
+			// count = count + 1
+			// fmt.Println(count)
 		} else {
 			processFeatureLog(&processLog, fretureLogs)
 		}
@@ -128,6 +136,8 @@ func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
 	for _, v1 := range featureLogs {
 		for _, log := range v1 {
 			_, err := db.Insert(log)
+			// count = count + 1
+			// fmt.Println(count)
 			if err != nil {
 				panic("Insert log to preprocessLog failed!")
 			}

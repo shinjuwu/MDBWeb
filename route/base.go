@@ -28,6 +28,6 @@ func RegisterRouter() *gin.Engine {
 	router.POST(sysconst.THIRD_PARTY_PLATFROM_APOLLO, apolloController)
 	router.POST(sysconst.THIRD_PARTY_PLATFROM_DT, dtController)
 	router.POST(sysconst.THIRD_PARTY_PLATFROM_DIOS, diosController)
-	router.POST(sysconst.THIRD_PARTY_PLATFROM_CQ9, cq9Controller)
+	router.GET(sysconst.THIRD_PARTY_PLATFROM_CQ9, cq9Controller)
 	return router
 }
