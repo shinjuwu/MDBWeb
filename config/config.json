@@ -10,7 +10,7 @@
         "processInterval": {
             "time": 300
         },
-        "serve":{
+        "HTTPserve":{
             "port":20001
         }
     }

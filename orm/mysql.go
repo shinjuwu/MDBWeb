@@ -32,7 +32,7 @@ type serve struct {
 type data struct {
 	Database        database  `json:"database"`
 	ProcessInterval pinterval `json:"processInterval"`
-	Serve           serve     `json:"serve"`
+	Serve           serve     `json:"HTTPserve"`
 }
 
 type settings struct {
