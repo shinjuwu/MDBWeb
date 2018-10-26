@@ -47,17 +47,17 @@ func ProcessCQ9Log() error {
 
 func createPreprocessLog(data *orm.BetCluster) {
 	db := orm.MysqlDB()
-	sql := "SELECT WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round),Process_Status FROM `gamelog_fish` WHERE ClusterID=" +
-		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=12 or Process_Status=13 or Process_Status=14) GROUP BY WinOdds,FeatureType,FishType,Process_Status"
+	sql := "SELECT Bet,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round),Process_Status FROM `gamelog_fish` WHERE ClusterID=" +
+		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=12 or Process_Status=13 or Process_Status=14) GROUP BY Bet,FeatureType,FishType,Process_Status"
 	//sql := "SELECT ClusterID,WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round) FROM `gamelog_fish` WHERE ClusterID=112 GROUP BY WinOdds,FeatureType,FishType"
 	results, err := db.Query(sql)
 	if err != nil {
 		panic("query fish log failed")
 	}
-	fretureLogs := map[int]map[int]orm.PreprocessLog{} //map[winadd]map[fishID]log
+	fretureLogs := map[int]map[int]orm.PreprocessLog{} //map[bet]map[fishID]log
 
 	for _, v := range results {
-		winodds, _ := strconv.Atoi(string(v["WinOdds"]))
+		bet, _ := strconv.Atoi(string(v["Bet"]))
 		featureType, _ := strconv.Atoi(string(v["FeatureType"]))
 		totalFeatureBet, _ := strconv.Atoi(string(v["SUM(FeatureBet)"]))
 		totalRound, _ := strconv.Atoi(string(v["SUM(Round)"]))
@@ -67,7 +67,7 @@ func createPreprocessLog(data *orm.BetCluster) {
 		processLog := orm.PreprocessLog{
 			ClusterID:       data.ClusterID,
 			RoundID:         data.RoundID,
-			WinOdds:         winodds,
+			Bet:             bet,
 			FeatureType:     featureType,
 			FishType:        string(v["FishType"]),
 			Result:          string(v["Result"]),
@@ -90,14 +90,11 @@ func createPreprocessLog(data *orm.BetCluster) {
 			if err != nil {
 				panic("Insert into preprocessLog failed!")
 			}
-			// count = count + 1
-			// fmt.Println(count)
 		} else {
 			processFeatureLog(&processLog, fretureLogs)
 		}
 	}
 	insertFeatureLog(fretureLogs)
-	//fmt.Println(results)
 }
 
 //統計results的魚得分資料
@@ -110,8 +107,8 @@ func processFeatureLog(log *orm.PreprocessLog, featureLogs map[int]map[int]orm.P
 	}
 	var fLogBywinodds map[int]orm.PreprocessLog
 	var ok bool
-	if fLogBywinodds, ok = featureLogs[log.WinOdds]; !ok {
-		featureLogs[log.WinOdds] = make(map[int]orm.PreprocessLog)
+	if fLogBywinodds, ok = featureLogs[log.Bet]; !ok {
+		featureLogs[log.Bet] = make(map[int]orm.PreprocessLog)
 		fLogBywinodds = make(map[int]orm.PreprocessLog)
 	}
 	for _, v := range result.Kill_info {
@@ -127,8 +124,7 @@ func processFeatureLog(log *orm.PreprocessLog, featureLogs map[int]map[int]orm.P
 			}
 		}
 	}
-	featureLogs[log.WinOdds] = fLogBywinodds
-	//fmt.Println(featureLogs)
+	featureLogs[log.Bet] = fLogBywinodds
 }
 
 func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
@@ -136,8 +132,6 @@ func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
 	for _, v1 := range featureLogs {
 		for _, log := range v1 {
 			_, err := db.Insert(log)
-			// count = count + 1
-			// fmt.Println(count)
 			if err != nil {
 				panic("Insert log to preprocessLog failed!")
 			}

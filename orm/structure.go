@@ -149,7 +149,7 @@ type PreprocessLog struct {
 	ID              int64  `xorm:"pk notnull autoincr"`
 	ClusterID       int64  `xorm:"index notnull 'ClusterID'"`
 	RoundID         string `xorm:"notnull varchar(45) 'RoundID'"`
-	WinOdds         int    `xorm:"notnull default(0) 'WinOdds'"`
+	Bet             int    `xorm:"notnull default(0) 'Bet'"`
 	FeatureType     int    `xorm:"notnull default(0) 'FeatureType'"`
 	FishType        string `xorm:"varchar(200) notnull default('0') 'FishType'"`
 	Result          string `xorm:"varchar(4000) notnull 'Result'"`

@@ -25,9 +25,8 @@ type FishDetailLogCQ9 struct {
 }
 
 type FishGameLog struct {
-	FeatureType int `json:"featureType"` //道具種類
-	WinOdds     int `json:"winOdds"`     //押注額
-	//FishType        string `json:"fishType"`         //魚種
+	FeatureType     int    `json:"featureType"` //道具種類
+	Bet             int    `json:"bet"`         //押注額
 	FishID          string `json:"fishID"`
 	TotalBet        int64  `json:"totalBet"`         //總押注
 	TotalFeatureBet int64  `json:"totalFeatureBet"`  //總道具押注
@@ -43,7 +42,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 	for _, v := range preprocessLog {
 		fishGameLog := FishGameLog{
 			FeatureType:     v.FeatureType,
-			WinOdds:         v.WinOdds,
+			Bet:             v.Bet,
 			FishID:          v.FishID,
 			TotalBet:        v.TotalBet,
 			TotalFeatureBet: v.TotalFeatureBet,
@@ -83,7 +82,7 @@ func GetProcessLog(clusterID int64) []orm.PreprocessLog {
 		panic("GetProcessLog error")
 	}
 	for _, v := range results {
-		winodds, _ := strconv.Atoi(string(v["WinOdds"]))
+		bet, _ := strconv.Atoi(string(v["Bet"]))
 		featureType, _ := strconv.Atoi(string(v["FeatureType"]))
 		fishID := string(v["FishID"])
 		totalFeatureBet, _ := strconv.Atoi(string(v["SUM(TotalFeatureBet)"]))
@@ -92,7 +91,7 @@ func GetProcessLog(clusterID int64) []orm.PreprocessLog {
 		totalWin, _ := strconv.Atoi(string(v["SUM(TotalWin)"]))
 		processLog := orm.PreprocessLog{
 			ClusterID:       clusterID,
-			WinOdds:         winodds,
+			Bet:             bet,
 			FeatureType:     featureType,
 			FishID:          fishID,
 			TotalFeatureBet: int64(totalFeatureBet),
