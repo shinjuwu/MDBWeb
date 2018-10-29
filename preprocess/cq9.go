@@ -47,9 +47,9 @@ func ProcessCQ9Log() error {
 
 func createPreprocessLog(data *orm.BetCluster) {
 	db := orm.MysqlDB()
-	sql := "SELECT Bet,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round),Process_Status FROM `gamelog_fish` WHERE ClusterID=" +
-		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=12 or Process_Status=13 or Process_Status=14) GROUP BY Bet,FeatureType,FishType,Process_Status"
-	//sql := "SELECT ClusterID,WinOdds,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round) FROM `gamelog_fish` WHERE ClusterID=112 GROUP BY WinOdds,FeatureType,FishType"
+	sql := "SELECT Bet,FeatureBet,FeatureType,FishType,Result,SUM(Bet),SUM(FeatureBet),SUM(Bet_Win),SUM(Round),Count(id),Process_Status FROM `gamelog_fish` WHERE ClusterID=" +
+		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=12 or Process_Status=13 or Process_Status=14) GROUP BY Bet,FeatureBet,FeatureType,FishType,Process_Status"
+
 	results, err := db.Query(sql)
 	if err != nil {
 		panic("query fish log failed")
@@ -58,16 +58,24 @@ func createPreprocessLog(data *orm.BetCluster) {
 
 	for _, v := range results {
 		bet, _ := strconv.Atoi(string(v["Bet"]))
+		featureBet, _ := strconv.Atoi(string(v["FeatureBet"]))
 		featureType, _ := strconv.Atoi(string(v["FeatureType"]))
 		totalFeatureBet, _ := strconv.Atoi(string(v["SUM(FeatureBet)"]))
 		totalRound, _ := strconv.Atoi(string(v["SUM(Round)"]))
 		totalBet, _ := strconv.Atoi(string(v["SUM(Bet)"]))
 		totalWin, _ := strconv.Atoi(string(v["SUM(Bet_Win)"]))
 		processStatus, _ := strconv.Atoi(string(v["Process_Status"]))
+		var disConnTimes, disConnSettle int
+		if processStatus == 12 {
+			//斷線結清
+			disConnTimes, _ = strconv.Atoi(string(v["Count(id)"]))
+			disConnSettle = totalWin
+		}
 		processLog := orm.PreprocessLog{
 			ClusterID:       data.ClusterID,
 			RoundID:         data.RoundID,
 			Bet:             bet,
+			FeatureBet:      featureBet,
 			FeatureType:     featureType,
 			FishType:        string(v["FishType"]),
 			Result:          string(v["Result"]),
@@ -76,6 +84,8 @@ func createPreprocessLog(data *orm.BetCluster) {
 			TotalBet:        int64(totalBet),
 			TotalWin:        int64(totalWin),
 			ProcessStatus:   processStatus,
+			DisConTimes:     int64(disConnTimes),
+			DisConSettle:    int64(disConnSettle),
 		}
 		if processLog.FishType == "" {
 			continue

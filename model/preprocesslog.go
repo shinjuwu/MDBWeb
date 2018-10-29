@@ -18,7 +18,7 @@ type FishDetailLogCQ9 struct {
 	Account   string        `json:"account"`   //玩家帳號
 	Currency  string        `json:"currency"`  //幣別
 	Round     int64         `json:"round"`     //總局數
-	Bet       int64         `json:"bet"`       //總壓分
+	OrderBet  int64         `json:"orderbet"`  //總壓分
 	Win       int64         `json:"win"`       //總贏分
 	WinLose   int64         `json:"winLose"`   //總輸贏
 	GameLog   []FishGameLog `json:"gameLog"`   //遊戲紀錄
@@ -27,6 +27,7 @@ type FishDetailLogCQ9 struct {
 type FishGameLog struct {
 	FeatureType     int    `json:"featureType"` //道具種類
 	Bet             int    `json:"bet"`         //押注額
+	FeatureBet      int    `json:"featureBet"`  //特殊道具壓住額
 	FishID          string `json:"fishID"`
 	TotalBet        int64  `json:"totalBet"`         //總押注
 	TotalFeatureBet int64  `json:"totalFeatureBet"`  //總道具押注
@@ -43,6 +44,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 		fishGameLog := FishGameLog{
 			FeatureType:     v.FeatureType,
 			Bet:             v.Bet,
+			FeatureBet:      v.FeatureBet,
 			FishID:          v.FishID,
 			TotalBet:        v.TotalBet,
 			TotalFeatureBet: v.TotalFeatureBet,
@@ -61,7 +63,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 		Account:   betCluster.Account,
 		Currency:  betCluster.Currency,
 		Round:     betCluster.Round,
-		Bet:       betCluster.Bet,
+		OrderBet:  betCluster.Bet,
 		Win:       betCluster.Win,
 		WinLose:   betCluster.WinLose,
 		GameLog:   fishGamelogList,
@@ -75,29 +77,35 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 func GetProcessLog(clusterID int64) []orm.PreprocessLog {
 	db := orm.MysqlDB()
 	preprocessLog := make([]orm.PreprocessLog, 0)
-	sql := "SELECT WinOdds,FeatureType,FishID,SUM(TotalFeatureBet),SUM(TotalRound),SUM(TotalBet),SUM(TotalWin),dis_con_times,dis_con_settle FROM `preprocess_log` WHERE ClusterID=" +
-		strconv.Itoa(int(clusterID)) + " GROUP BY WinOdds,FeatureType,FishID"
+	sql := "SELECT Bet,FeatureBet,FeatureType,FishID,SUM(TotalFeatureBet),SUM(TotalRound),SUM(TotalBet),SUM(TotalWin),dis_con_times,dis_con_settle FROM `preprocess_log` WHERE ClusterID=" +
+		strconv.Itoa(int(clusterID)) + " GROUP BY Bet,FeatureBet,FeatureType,FishID"
 	results, err := db.Query(sql)
 	if err != nil {
 		panic("GetProcessLog error")
 	}
 	for _, v := range results {
 		bet, _ := strconv.Atoi(string(v["Bet"]))
+		featureBet, _ := strconv.Atoi(string(v["FeatureBet"]))
 		featureType, _ := strconv.Atoi(string(v["FeatureType"]))
 		fishID := string(v["FishID"])
 		totalFeatureBet, _ := strconv.Atoi(string(v["SUM(TotalFeatureBet)"]))
 		totalRound, _ := strconv.Atoi(string(v["SUM(TotalRound)"]))
 		totalBet, _ := strconv.Atoi(string(v["SUM(TotalBet)"]))
 		totalWin, _ := strconv.Atoi(string(v["SUM(TotalWin)"]))
+		disConnTimes, _ := strconv.Atoi(string(v["SUM(dis_con_times)"]))
+		disConnSettle, _ := strconv.Atoi(string(v["SUM(dis_con_settle)"]))
 		processLog := orm.PreprocessLog{
 			ClusterID:       clusterID,
 			Bet:             bet,
+			FeatureBet:      featureBet,
 			FeatureType:     featureType,
 			FishID:          fishID,
 			TotalFeatureBet: int64(totalFeatureBet),
 			TotalRound:      int64(totalRound),
 			TotalBet:        int64(totalBet),
 			TotalWin:        int64(totalWin),
+			DisConTimes:     int64(disConnTimes),
+			DisConSettle:    int64(disConnSettle),
 		}
 		preprocessLog = append(preprocessLog, processLog)
 	}
