@@ -8,7 +8,7 @@ type BetCluster struct {
 	PlatformID          int       `xorm:"pk index 'PlatformID' notnull"`
 	MemberCode          int       `xorm:"notnull 'MemberCode' default(0)"`
 	AgentID             int       `xorm:"notnull 'AgentID' default(0)"`
-	LobbyID             byte      `xorm:"notnull 'LobbyID' default(0)"`
+	LobbyID             int       `xorm:"notnull 'LobbyID' default(0)"`
 	GameID              int       `xorm:"pk 'GameID' notnull"`
 	UserID              int64     `xorm:"notnull index 'UserID'"`
 	ThirdPartyUserID    int64     `xorm:"notnull default(0) index 'ThirdPartyUserID'"`
