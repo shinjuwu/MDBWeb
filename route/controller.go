@@ -75,7 +75,21 @@ func getOrderInfo(context *gin.Context) interface{} {
 	token := context.Query("token")
 	detailInfo := getDetailOrderInfo(token)
 	betCluster := model.GetBetCluster(detailInfo.Data.RoundID)
+	if betCluster == nil {
+		res := &CommonHttpResponseInfo{
+			Code:    int(sysconst.ERROR_CODE_CQ9_ORDER_NOT_FOUND),
+			Message: "找不到注單",
+		}
+		return res
+	}
 	ResFishBetInfo := model.GetFishBetDetailForCQ9(betCluster)
+	if len(ResFishBetInfo.BetDetail.GameLog) == 0 {
+		res := &CommonHttpResponseInfo{
+			Code:    int(sysconst.ERROR_CODE_CQ9_ORDERDETAIL_NOT_FOUND),
+			Message: "找不到細單",
+		}
+		return res
+	}
 	return ResFishBetInfo
 }
 

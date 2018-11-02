@@ -34,7 +34,7 @@ func Test_insertFeatureLog(t *testing.T) {
 	data := orm.PreprocessLog{
 		ClusterID:       11,
 		RoundID:         "AP1234545",
-		WinOdds:         1000,
+		Bet:             1000,
 		FeatureType:     1,
 		FishType:        "1",
 		Result:          "sdfdfhfghf",
@@ -47,7 +47,7 @@ func Test_insertFeatureLog(t *testing.T) {
 	data2 := orm.PreprocessLog{
 		ClusterID:       11,
 		RoundID:         "AP1234545",
-		WinOdds:         1000,
+		Bet:             1000,
 		FeatureType:     1,
 		FishType:        "1",
 		Result:          "sdfdfhfghf",
@@ -85,7 +85,7 @@ func Test_processFeatureLog(t *testing.T) {
 	log := &orm.PreprocessLog{
 		ClusterID:       11,
 		RoundID:         "AP1234545",
-		WinOdds:         1000,
+		Bet:             1000,
 		FeatureType:     1,
 		FishType:        "1",
 		Result:          "eJy01UFqwzAQBdC7/LUWM7EVRbpKKcZgmYqmTokUSgm5e6H1InJVKNFoaWyexfw/9hVn/zaGZThNU4QjhdmP6XL2Q5jg0EHhNRyPQ1jmE9zTFTGN6RLhWGEO8eX7sX63XqTPdw/HRuEjLHCGiO7En7sg/HrJTZVhbcuwroX3Jof1Cne1sOnK8EMnpnv4kMP9Cv8DpT/RQ45aCdPmZdiLmPlUScTUmbkTMTe1EjHzjDoR08rnzkTyITGx/ESZNksqkj1T32BDmXSLqZoWqJUvKjOV/wCVaotWcYMPH7OuOOnz7SsAAP//nm16MQ==",

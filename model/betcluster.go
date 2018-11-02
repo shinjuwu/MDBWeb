@@ -74,9 +74,12 @@ func getBetDetailLog(gameMode int8, betCluster *orm.BetCluster) interface{} {
 func GetBetCluster(roundID string) *orm.BetCluster {
 	db := orm.MysqlDB()
 	betCluster := new(orm.BetCluster)
-	_, err := db.Where("RoundID=?", roundID).Get(betCluster)
+	has, err := db.Where("RoundID=?", roundID).Get(betCluster)
 	if err != nil {
 		panic("GetBetCluster err")
+	}
+	if !has {
+		return nil
 	}
 	return betCluster
 }
