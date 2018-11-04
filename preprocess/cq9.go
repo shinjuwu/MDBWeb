@@ -4,7 +4,6 @@ import (
 	"MDBWeb/orm"
 	"MDBWeb/tool"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -25,22 +24,20 @@ type SaveGameLog_Fish_Feature_Hit struct {
 	Kill_info []Fish_Kill_Info `json:"kill_info"` // 給獎的魚id陣列
 }
 
-func ProcessCQ9Log() error {
-	fmt.Println("Process CQ9 Log-start")
+func ProcessCQ9Log() {
+	tool.Log.Info("CQ9 Prepross routine start.")
 	db := orm.MysqlDB()
 	betClusterList := make([]orm.BetCluster, 0)
 	err := db.Where("IsProcess = ?", 0).And("RoundID <> ?", "").Find(&betClusterList)
-	//err := db.Where("IsProcess = ?", 0).And("ClusterID = ?", 112).Find(&betClusterList)
 	if err != nil {
-		panic("get betcluster failed!")
+		tool.Log.Errorf("Get betcluster failed! Xorm inner failed! Error: %v", err)
 	}
 
 	for _, v := range betClusterList {
 		createPreprocessLog(&v)
 		setProcessed(&v)
 	}
-	fmt.Println("Process CQ9 Log-End")
-	return nil
+	tool.Log.Info("CQ9 Prepross routine end.")
 }
 
 //var count int
@@ -52,40 +49,43 @@ func createPreprocessLog(data *orm.BetCluster) {
 
 	results, err := db.Query(sql)
 	if err != nil {
-		panic("query fish log failed")
+		tool.Log.Errorf("Query fish log failed, Sql: %s , Error = %v", sql, err)
+		return
 	}
 	fretureLogs := map[int]map[int]orm.PreprocessLog{} //map[bet]map[fishID]log
 
 	for _, v := range results {
-		bet, _ := strconv.Atoi(string(v["Bet"]))
-		featureBet, _ := strconv.Atoi(string(v["FeatureBet"]))
-		featureType, _ := strconv.Atoi(string(v["FeatureType"]))
-		totalFeatureBet, _ := strconv.Atoi(string(v["SUM(FeatureBet)"]))
-		totalRound, _ := strconv.Atoi(string(v["SUM(Round)"]))
-		totalBet, _ := strconv.Atoi(string(v["SUM(Bet)"]))
-		totalWin, _ := strconv.Atoi(string(v["SUM(Bet_Win)"]))
-		processStatus, _ := strconv.Atoi(string(v["Process_Status"]))
-		var disConnTimes, disConnSettle int
-		if processStatus == 12 {
+		queryData, err := checkQueryFlied(v)
+		if err != nil {
+			tool.Log.Errorf("String to int failed, Error = %v", err)
+			return
+		}
+		var disConnTimes int
+		var disConnSettle int64
+		if queryData.ProcessStatus == 12 {
 			//斷線結清
-			disConnTimes, _ = strconv.Atoi(string(v["Count(id)"]))
-			disConnSettle = totalWin
+			disConnTimes, err = strconv.Atoi(string(v["Count(id)"]))
+			if err != nil {
+				tool.Log.Errorf("String to int failed, Error = %v", err)
+				return
+			}
+			disConnSettle = queryData.TotalWin
 		}
 		processLog := orm.PreprocessLog{
 			ClusterID:       data.ClusterID,
 			RoundID:         data.RoundID,
-			Bet:             bet,
-			FeatureBet:      featureBet,
-			FeatureType:     featureType,
+			Bet:             queryData.Bet,
+			FeatureBet:      queryData.FeatureBet,
+			FeatureType:     queryData.FeatureType,
 			FishType:        string(v["FishType"]),
 			Result:          string(v["Result"]),
-			TotalFeatureBet: int64(totalFeatureBet),
-			TotalRound:      int64(totalRound),
-			TotalBet:        int64(totalBet),
-			TotalWin:        int64(totalWin),
-			ProcessStatus:   processStatus,
+			TotalFeatureBet: queryData.TotalFeatureBet,
+			TotalRound:      queryData.TotalRound,
+			TotalBet:        queryData.TotalBet,
+			TotalWin:        queryData.TotalWin,
+			ProcessStatus:   queryData.ProcessStatus,
 			DisConTimes:     int64(disConnTimes),
-			DisConSettle:    int64(disConnSettle),
+			DisConSettle:    disConnSettle,
 		}
 		if processLog.FishType == "" {
 			continue
@@ -98,7 +98,8 @@ func createPreprocessLog(data *orm.BetCluster) {
 			processLog.FishID = processLog.FishType
 			_, err := db.Insert(processLog)
 			if err != nil {
-				panic("Insert into preprocessLog failed!")
+				tool.Log.Errorf("Insert into preprocessLog failed! Error = %v  , ProcessLog = %v", err, processLog)
+				return
 			}
 		} else {
 			processFeatureLog(&processLog, fretureLogs)
@@ -113,7 +114,8 @@ func processFeatureLog(log *orm.PreprocessLog, featureLogs map[int]map[int]orm.P
 	decodeResult := tool.DoZlibUnCompressGetString(log.Result)
 	err := json.Unmarshal([]byte(decodeResult), &result)
 	if err != nil {
-		panic("Json Umarshal failed!")
+		tool.Log.Errorf("Json Unmarshal failed! Error= %v , Result= %s", err, decodeResult)
+		return
 	}
 	var fLogBywinodds map[int]orm.PreprocessLog
 	var ok bool
@@ -143,7 +145,8 @@ func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
 		for _, log := range v1 {
 			_, err := db.Insert(log)
 			if err != nil {
-				panic("Insert log to preprocessLog failed!")
+				tool.Log.Errorf("Insert log to preprocessLog failed! Error: %v , log : %v", err, log)
+				continue
 			}
 		}
 	}
@@ -154,6 +157,54 @@ func setProcessed(log *orm.BetCluster) {
 	sql := "UPDATE bet_cluster SET IsProcess=1 WHERE ClusterID=" + strconv.Itoa(int(log.ClusterID))
 	_, err := db.Query(sql)
 	if err != nil {
-		panic("Set processed failed!")
+		tool.Log.Errorf("Set processed failed!, Error: %v , Sql: %s", err, sql)
+		return
 	}
+}
+
+func checkQueryFlied(v map[string][]byte) (*orm.PreprocessLog, error) {
+	queryData := &orm.PreprocessLog{}
+	var value int
+	var err error
+	queryData.Bet, err = strconv.Atoi(string(v["Bet"]))
+	if err != nil {
+		return nil, err
+	}
+	queryData.FeatureBet, err = strconv.Atoi(string(v["FeatureBet"]))
+	if err != nil {
+		return nil, err
+	}
+	queryData.FeatureType, err = strconv.Atoi(string(v["FeatureType"]))
+	if err != nil {
+		return nil, err
+	}
+	value, err = strconv.Atoi(string(v["SUM(FeatureBet)"]))
+	if err != nil {
+		return nil, err
+	}
+	queryData.TotalFeatureBet = int64(value)
+
+	value, err = strconv.Atoi(string(v["SUM(Round)"]))
+	if err != nil {
+		return nil, err
+	}
+	queryData.TotalRound = int64(value)
+
+	value, err = strconv.Atoi(string(v["SUM(Bet)"]))
+	if err != nil {
+		return nil, err
+	}
+	queryData.TotalBet = int64(value)
+
+	value, err = strconv.Atoi(string(v["SUM(Bet_Win)"]))
+	if err != nil {
+		return nil, err
+	}
+	queryData.TotalWin = int64(value)
+
+	queryData.ProcessStatus, err = strconv.Atoi(string(v["Process_Status"]))
+	if err != nil {
+		return nil, err
+	}
+	return queryData, nil
 }

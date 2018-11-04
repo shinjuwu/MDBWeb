@@ -2,7 +2,6 @@ package preprocess
 
 import (
 	"MDBWeb/orm"
-	"fmt"
 	"time"
 )
 
@@ -14,20 +13,14 @@ func PreProcessLog() {
 		select {
 		case <-timer.C:
 			go func() {
-				currentTime := time.Now()
-				fmt.Println(currentTime)
 				runCQ9Log()
-				currentTime = time.Now()
-				fmt.Println(currentTime)
-				fmt.Println("===========================================================================================================")
 			}()
 		}
 	}
 }
 
 func runCQ9Log() {
-	err := ProcessCQ9Log()
-	if err != nil {
-		panic("ProcessCQ9 Log Failed! outside Level")
-	}
+
+	ProcessCQ9Log()
+
 }
