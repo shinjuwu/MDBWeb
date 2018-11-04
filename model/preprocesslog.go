@@ -31,7 +31,7 @@ type FishGameLog struct {
 	FeatureBet      int    `json:"featureBet"`  //特殊道具壓住額
 	FishID          string `json:"fishID"`
 	TotalBet        int64  `json:"totalBet"`         //總押注
-	TotalFeatureBet int64  `json:"totalFeatureBet"`  //總道具押注
+	TotalFeatureHit int64  `json:"totalFeatureHit"`  //總道具擊中次數
 	TotalWin        int64  `json:"totalWin"`         //總贏分
 	TotalRound      int64  `json:"totalRound"`       //總局數
 	DisConTimes     int64  `json:"disconnectTimes"`  //斷線次數
@@ -48,7 +48,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 			FeatureBet:      v.FeatureBet,
 			FishID:          v.FishID,
 			TotalBet:        v.TotalBet,
-			TotalFeatureBet: v.TotalFeatureBet,
+			TotalFeatureHit: v.TotalFeatureHit,
 			TotalWin:        v.TotalWin,
 			TotalRound:      v.TotalRound,
 			DisConTimes:     v.DisConTimes,
@@ -79,7 +79,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 func GetProcessLog(clusterID int64) []orm.PreprocessLog {
 	db := orm.MysqlDB()
 	preprocessLog := make([]orm.PreprocessLog, 0)
-	sql := "SELECT Bet,FeatureBet,FeatureType,FishID,SUM(TotalFeatureBet),SUM(TotalRound),SUM(TotalBet),SUM(TotalWin),dis_con_times,dis_con_settle FROM `preprocess_log` WHERE ClusterID=" +
+	sql := "SELECT Bet,FeatureBet,FeatureType,FishID,SUM(TotalFeatureHit),SUM(TotalRound),SUM(TotalBet),SUM(TotalWin),dis_con_times,dis_con_settle FROM `preprocess_log` WHERE ClusterID=" +
 		strconv.Itoa(int(clusterID)) + " GROUP BY Bet,FeatureBet,FeatureType,FishID"
 	results, err := db.Query(sql)
 	if err != nil {
@@ -90,7 +90,7 @@ func GetProcessLog(clusterID int64) []orm.PreprocessLog {
 		featureBet, _ := strconv.Atoi(string(v["FeatureBet"]))
 		featureType, _ := strconv.Atoi(string(v["FeatureType"]))
 		fishID := string(v["FishID"])
-		totalFeatureBet, _ := strconv.Atoi(string(v["SUM(TotalFeatureBet)"]))
+		totalFeatureHit, _ := strconv.Atoi(string(v["SUM(TotalFeatureHit)"]))
 		totalRound, _ := strconv.Atoi(string(v["SUM(TotalRound)"]))
 		totalBet, _ := strconv.Atoi(string(v["SUM(TotalBet)"]))
 		totalWin, _ := strconv.Atoi(string(v["SUM(TotalWin)"]))
@@ -102,7 +102,7 @@ func GetProcessLog(clusterID int64) []orm.PreprocessLog {
 			FeatureBet:      featureBet,
 			FeatureType:     featureType,
 			FishID:          fishID,
-			TotalFeatureBet: int64(totalFeatureBet),
+			TotalFeatureHit: int64(totalFeatureHit),
 			TotalRound:      int64(totalRound),
 			TotalBet:        int64(totalBet),
 			TotalWin:        int64(totalWin),

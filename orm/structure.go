@@ -154,7 +154,7 @@ type PreprocessLog struct {
 	FeatureType     int    `xorm:"notnull default(0) 'FeatureType'"`
 	FishType        string `xorm:"varchar(200) notnull default('0') 'FishType'"`
 	Result          string `xorm:"varchar(4000) notnull 'Result'"`
-	TotalFeatureBet int64  `xorm:"notnull default(0) 'TotalFeatureBet'"`
+	TotalFeatureHit int64  `xorm:"notnull default(0) 'TotalFeatureHit'"`
 	TotalRound      int64  `xorm:"notnull default(0) 'TotalRound'"`
 	TotalBet        int64  `xorm:"notnull default(0) 'TotalBet'"`
 	TotalWin        int64  `xorm:"notnull default(0) 'TotalWin'"`
