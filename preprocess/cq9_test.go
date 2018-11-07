@@ -38,7 +38,7 @@ func Test_insertFeatureLog(t *testing.T) {
 		FeatureType:     1,
 		FishType:        "1",
 		Result:          "sdfdfhfghf",
-		TotalFeatureBet: 0,
+		TotalFeatureHit: 0,
 		TotalRound:      0,
 		TotalBet:        0,
 		TotalWin:        0,
@@ -51,7 +51,7 @@ func Test_insertFeatureLog(t *testing.T) {
 		FeatureType:     1,
 		FishType:        "1",
 		Result:          "sdfdfhfghf",
-		TotalFeatureBet: 0,
+		TotalFeatureHit: 0,
 		TotalRound:      0,
 		TotalBet:        0,
 		TotalWin:        0,
@@ -88,8 +88,8 @@ func Test_processFeatureLog(t *testing.T) {
 		Bet:             1000,
 		FeatureType:     1,
 		FishType:        "1",
-		Result:          "eJy01UFqwzAQBdC7/LUWM7EVRbpKKcZgmYqmTokUSgm5e6H1InJVKNFoaWyexfw/9hVn/zaGZThNU4QjhdmP6XL2Q5jg0EHhNRyPQ1jmE9zTFTGN6RLhWGEO8eX7sX63XqTPdw/HRuEjLHCGiO7En7sg/HrJTZVhbcuwroX3Jof1Cne1sOnK8EMnpnv4kMP9Cv8DpT/RQ45aCdPmZdiLmPlUScTUmbkTMTe1EjHzjDoR08rnzkTyITGx/ESZNksqkj1T32BDmXSLqZoWqJUvKjOV/wCVaotWcYMPH7OuOOnz7SsAAP//nm16MQ==",
-		TotalFeatureBet: 0,
+		Result:          "eJy81MFqhDAQxvF3+c45jO4mu+ZVShHBiKFpLCZSivjuBauUabUHa/aYMPCDf8KM6M1rZX3Z1XWAJoHGVHHoTWlraCgIvFjnSuubDvppRIhVHAJ0JtDY0M5jmVpP8ePNQGc3gXfroSURkUBojXPzhR+c+ya+pkH4pU5iR7rfuSQX6XK6VBCT8gW6nuAQc360W6EDCv2h5Nvd/q3wZtcHNZPMuaRJphii0iA3/i5pkIIhRQokp50dcLIiN3/YMeR5+gwAAP//aOia4Q==",
+		TotalFeatureHit: 0,
 		TotalRound:      0,
 		TotalBet:        0,
 		TotalWin:        0,
@@ -117,10 +117,7 @@ func Test_processFeatureLog(t *testing.T) {
 func TestProcessCQ9Log(t *testing.T) {
 	orm.OpenDB()
 	orm.TableInit()
-	err := ProcessCQ9Log()
-	if err != nil {
-
-	}
+	ProcessCQ9Log()
 }
 
 func Test_setProcessed(t *testing.T) {

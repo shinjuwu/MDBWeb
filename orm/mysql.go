@@ -2,6 +2,7 @@ package orm
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
@@ -47,13 +48,13 @@ func init() {
 
 func OpenDB() {
 	fmt.Println("mysqldb->Open DB")
-	// username := Conf.Setting.Database.UserName
-	// passwd := Conf.Setting.Database.Passwd
-	// ipaddr := Conf.Setting.Database.Address
-	// port := Conf.Setting.Database.Port
-	// dbName := Conf.Setting.Database.DBName
-	connStr := "root:pass@tcp(127.0.0.1:3306)/one1cloud_main?parseTime=true"
-	//connStr := username + ":" + passwd + "@tcp(" + ipaddr + ":" + strconv.Itoa(port) + ")/" + dbName + "?parseTime=true"
+	username := Conf.Setting.Database.UserName
+	passwd := Conf.Setting.Database.Passwd
+	ipaddr := Conf.Setting.Database.Address
+	port := Conf.Setting.Database.Port
+	dbName := Conf.Setting.Database.DBName
+	//connStr := "root:pass@tcp(127.0.0.1:3306)/one1cloud_main?parseTime=true"
+	connStr := username + ":" + passwd + "@tcp(" + ipaddr + ":" + strconv.Itoa(port) + ")/" + dbName + "?parseTime=true"
 	var err error
 	db, err = xorm.NewEngine("mysql", connStr)
 	if err != nil {
@@ -61,8 +62,8 @@ func OpenDB() {
 	}
 
 	db.SetMapper(core.GonicMapper{})
-	cacher := xorm.NewLRUCacher(xorm.NewMemoryStore(), 1000)
-	db.SetDefaultCacher(cacher)
+	// cacher := xorm.NewLRUCacher(xorm.NewMemoryStore(), 1000)
+	// db.SetDefaultCacher(cacher)
 
 	logSetting(db, "release")
 }

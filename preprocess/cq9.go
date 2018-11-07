@@ -45,7 +45,7 @@ func ProcessCQ9Log() {
 
 func createPreprocessLog(data *orm.BetCluster) {
 	db := orm.MysqlDB()
-	sql := "SELECT Bet,FeatureBet,FeatureType,FishType,Result,SUM(Bet),SUM(Bet_Win),SUM(Round),Count(id),Process_Status FROM `gamelog_fish` WHERE ClusterID=" +
+	sql := "SELECT Bet,FeatureBet,FeatureType,FishType,Result,SUM(Bet),SUM(Bet_Win),Count(Round),Count(id),Process_Status FROM `gamelog_fish` WHERE ClusterID=" +
 		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=12 or Process_Status=13 or Process_Status=14) GROUP BY Bet,FeatureBet,FeatureType,FishType,Process_Status"
 
 	results, err := db.Query(sql)
@@ -53,7 +53,7 @@ func createPreprocessLog(data *orm.BetCluster) {
 		tool.Log.Errorf("Query fish log failed, Sql: %s , Error = %v", sql, err)
 		return
 	}
-	fretureLogs := map[int]map[int]orm.PreprocessLog{} //map[bet]map[fishID]log
+	//fretureLogs := map[int]map[int]orm.PreprocessLog{} //map[bet]map[fishID]log
 
 	for _, v := range results {
 		queryData, err := checkQueryFlied(v)
@@ -102,33 +102,35 @@ func createPreprocessLog(data *orm.BetCluster) {
 				return
 			}
 		} else {
-			processFeatureLog(&processLog, fretureLogs)
+			fretureLogs := processFeatureLog(&processLog)
+			if fretureLogs != nil {
+				insertFeatureLog(fretureLogs)
+			}
 		}
 	}
-	insertFeatureLog(fretureLogs)
 }
 
 //統計results的魚得分資料
-func processFeatureLog(log *orm.PreprocessLog, featureLogs map[int]map[int]orm.PreprocessLog) {
+func processFeatureLog(log *orm.PreprocessLog) map[int]map[int]orm.PreprocessLog {
 	result := SaveGameLog_Fish_Feature_Hit{}
 	decodeResult := tool.DoZlibUnCompressGetString(log.Result)
 	err := json.Unmarshal([]byte(decodeResult), &result)
 	if err != nil {
 		tool.Log.Errorf("Json Unmarshal failed! Error= %v , Result= %s", err, decodeResult)
-		return
+		return nil
 	}
+	featureLogs := map[int]map[int]orm.PreprocessLog{}
 	var fLogByFeatureBet map[int]orm.PreprocessLog //map[featureBet]orm.PreprocessLog
-	var ok bool
-	if fLogByFeatureBet, ok = featureLogs[log.FeatureBet]; !ok {
-		featureLogs[log.FeatureBet] = make(map[int]orm.PreprocessLog)
-		fLogByFeatureBet = make(map[int]orm.PreprocessLog)
-	}
+	featureLogs[log.FeatureBet] = make(map[int]orm.PreprocessLog)
+	fLogByFeatureBet = make(map[int]orm.PreprocessLog)
 	for _, v := range result.Kill_info {
 		if v.Status == 1 {
 			preLog := orm.PreprocessLog{}
+			var ok bool
 			if preLog, ok = fLogByFeatureBet[v.Fish_Type]; !ok {
 				log.FishID = strconv.Itoa(v.Fish_Type)
 				log.TotalFeatureHit = 1
+				log.TotalWin = v.Win
 				fLogByFeatureBet[v.Fish_Type] = *log
 			} else {
 				preLog.TotalFeatureHit = preLog.TotalFeatureHit + 1
@@ -138,6 +140,7 @@ func processFeatureLog(log *orm.PreprocessLog, featureLogs map[int]map[int]orm.P
 		}
 	}
 	featureLogs[log.Bet] = fLogByFeatureBet
+	return featureLogs
 }
 
 func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
@@ -179,7 +182,7 @@ func checkQueryFlied(v map[string][]byte) (*orm.PreprocessLog, error) {
 	if err != nil {
 		return nil, err
 	}
-	value, err = strconv.Atoi(string(v["SUM(Round)"]))
+	value, err = strconv.Atoi(string(v["Count(Round)"]))
 	if err != nil {
 		return nil, err
 	}
