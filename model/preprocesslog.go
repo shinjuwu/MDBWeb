@@ -41,6 +41,9 @@ type FishGameLog struct {
 func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGetForCQ9 {
 	preprocessLog := GetProcessLog(betCluster.ClusterID)
 	fishGamelogList := []FishGameLog{}
+	var effectTotalRound int64
+	var galtingTotalWin int64
+	var drillBomeTotalWin int64
 	for _, v := range preprocessLog {
 		fishGameLog := FishGameLog{
 			FeatureType:     v.FeatureType,
@@ -54,7 +57,22 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 			DisConTimes:     v.DisConTimes,
 			DisConSettle:    v.DisConSettle,
 		}
+		if v.FeatureType == 3 { //蓋特機槍
+			galtingTotalWin = galtingTotalWin + v.TotalWin
+		} else if v.FeatureType == 4 {
+			drillBomeTotalWin = drillBomeTotalWin + v.TotalWin
+		}
+		effectTotalRound = effectTotalRound + v.TotalRound
 		fishGamelogList = append(fishGamelogList, fishGameLog)
+	}
+
+	for k, v := range fishGamelogList {
+		if v.FeatureType == 3 { //蓋特機槍
+			v.TotalRound = galtingTotalWin
+		} else if v.FeatureType == 4 { //鑽頭砲
+			v.TotalRound = drillBomeTotalWin
+		}
+		fishGamelogList[k] = v
 	}
 	fishDetailLogCQ9 := FishDetailLogCQ9{
 		RoundID:   betCluster.RoundID,
@@ -64,7 +82,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 		LobbyID:   betCluster.LobbyID,
 		Account:   betCluster.Account,
 		Currency:  betCluster.Currency,
-		Round:     betCluster.Round,
+		Round:     effectTotalRound, //改成有效回合數
 		OrderBet:  betCluster.Bet,
 		Win:       betCluster.Win,
 		WinLose:   betCluster.WinLose,
