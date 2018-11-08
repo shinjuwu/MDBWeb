@@ -104,10 +104,28 @@ func createPreprocessLog(data *orm.BetCluster) {
 		} else {
 			fretureLogs := processFeatureLog(&processLog)
 			if fretureLogs != nil {
-				insertFeatureLog(fretureLogs)
+				totalWin := insertFeatureLog(fretureLogs)
+				err := updateFeatureTypeBetWin(queryData, totalWin)
+				if err != nil {
+					tool.Log.Errorf("Update the featuretype totalWin failed!, error:%v", err)
+					return
+				}
 			}
 		}
 	}
+}
+
+//更新Prepross_Log裡面的TotalBetWin
+func updateFeatureTypeBetWin(qd *orm.PreprocessLog, totalWin int64) error {
+	db := orm.MysqlDB()
+	data := orm.PreprocessLog{
+		TotalWin: totalWin,
+	}
+	_, err := db.Id(qd.ID).Update(data)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //統計results的魚得分資料
@@ -143,7 +161,9 @@ func processFeatureLog(log *orm.PreprocessLog) map[int]map[int]orm.PreprocessLog
 	return featureLogs
 }
 
-func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
+//回傳總壓鑄額給下個update用,違反單一直則原則,但是為了節省迴圈數
+func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) int64 {
+	var totalBet int64
 	db := orm.MysqlDB()
 	for _, v1 := range featureLogs {
 		for _, log := range v1 {
@@ -152,8 +172,10 @@ func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) {
 				tool.Log.Errorf("Insert log to preprocessLog failed! Error: %v , log : %v", err, log)
 				continue
 			}
+			totalBet = totalBet + log.TotalBet
 		}
 	}
+	return totalBet
 }
 
 func setProcessed(log *orm.BetCluster) {
@@ -170,6 +192,11 @@ func checkQueryFlied(v map[string][]byte) (*orm.PreprocessLog, error) {
 	queryData := &orm.PreprocessLog{}
 	var value int
 	var err error
+	value, err = strconv.Atoi(string(v["id"]))
+	if err != nil {
+		return nil, err
+	}
+	queryData.ID = int64(value)
 	queryData.Bet, err = strconv.Atoi(string(v["Bet"]))
 	if err != nil {
 		return nil, err
