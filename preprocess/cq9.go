@@ -104,57 +104,10 @@ func createPreprocessLog(data *orm.BetCluster) {
 		} else {
 			fretureLogs := processFeatureLog(&processLog)
 			if fretureLogs != nil {
-				totalWin := insertFeatureLog(fretureLogs)
-				log := getFeatureLog(processLog.FeatureBet, processLog.FeatureType)
-				if log == nil {
-					err := updateFeatureTypeBetWin(log)
-					if err != nil {
-						tool.Log.Errorf("Update the featuretype totalWin failed!, error:%v", err)
-						return
-					}
-				}
+				insertFeatureLog(fretureLogs)
 			}
 		}
 	}
-}
-
-func getFeatureLog(bet int, featureType int) *orm.PreprocessLog {
-	db := orm.MysqlDB()
-	if featureType == 3 {
-		data := &orm.PreprocessLog{
-			Bet:      bet,
-			FishType: "22",
-		}
-		isGet, err := db.Get(data)
-		if isGet == false || err != nil {
-			return nil
-		}
-		return data
-	} else if featureType == 4 {
-		data := &orm.PreprocessLog{
-			Bet:      bet,
-			FishType: "23",
-		}
-		isGet, err := db.Get(data)
-		if isGet == false || err != nil {
-			return nil
-		}
-		return data
-	}
-	return nil
-}
-
-//更新Prepross_Log裡面的TotalBetWin
-func updateFeatureTypeBetWin(qd *orm.PreprocessLog) error {
-	db := orm.MysqlDB()
-	data := orm.PreprocessLog{
-		TotalWin: ,
-	}
-	_, err := db.Id(qd.ID).Update(data)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 //統計results的魚得分資料
@@ -175,10 +128,11 @@ func processFeatureLog(log *orm.PreprocessLog) map[int]map[int]orm.PreprocessLog
 			preLog := orm.PreprocessLog{}
 			var ok bool
 			if preLog, ok = fLogByFeatureBet[v.Fish_Type]; !ok {
-				log.FishID = strconv.Itoa(v.Fish_Type)
-				log.TotalFeatureHit = 1
-				log.TotalWin = v.Win
-				fLogByFeatureBet[v.Fish_Type] = *log
+				copyLog := *log
+				copyLog.FishID = strconv.Itoa(v.Fish_Type)
+				copyLog.TotalFeatureHit = 1
+				copyLog.TotalWin = v.Win
+				fLogByFeatureBet[v.Fish_Type] = copyLog
 			} else {
 				preLog.TotalFeatureHit = preLog.TotalFeatureHit + 1
 				preLog.TotalWin = preLog.TotalWin + v.Win
@@ -192,7 +146,7 @@ func processFeatureLog(log *orm.PreprocessLog) map[int]map[int]orm.PreprocessLog
 
 //回傳總壓鑄額給下個update用,違反單一直則原則,但是為了節省迴圈數
 func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) int64 {
-	var totalBet int64
+	var totalWin int64
 	db := orm.MysqlDB()
 	for _, v1 := range featureLogs {
 		for _, log := range v1 {
@@ -201,10 +155,10 @@ func insertFeatureLog(featureLogs map[int]map[int]orm.PreprocessLog) int64 {
 				tool.Log.Errorf("Insert log to preprocessLog failed! Error: %v , log : %v", err, log)
 				continue
 			}
-			totalBet = totalBet + log.TotalBet
+			totalWin = totalWin + log.TotalWin
 		}
 	}
-	return totalBet
+	return totalWin
 }
 
 func setProcessed(log *orm.BetCluster) {
@@ -221,11 +175,6 @@ func checkQueryFlied(v map[string][]byte) (*orm.PreprocessLog, error) {
 	queryData := &orm.PreprocessLog{}
 	var value int
 	var err error
-	value, err = strconv.Atoi(string(v["id"]))
-	if err != nil {
-		return nil, err
-	}
-	queryData.ID = int64(value)
 	queryData.Bet, err = strconv.Atoi(string(v["Bet"]))
 	if err != nil {
 		return nil, err
