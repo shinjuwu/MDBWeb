@@ -105,21 +105,50 @@ func createPreprocessLog(data *orm.BetCluster) {
 			fretureLogs := processFeatureLog(&processLog)
 			if fretureLogs != nil {
 				totalWin := insertFeatureLog(fretureLogs)
-				err := updateFeatureTypeBetWin(queryData, totalWin)
-				if err != nil {
-					tool.Log.Errorf("Update the featuretype totalWin failed!, error:%v", err)
-					return
+				log := getFeatureLog(processLog.FeatureBet, processLog.FeatureType)
+				if log == nil {
+					err := updateFeatureTypeBetWin(log)
+					if err != nil {
+						tool.Log.Errorf("Update the featuretype totalWin failed!, error:%v", err)
+						return
+					}
 				}
 			}
 		}
 	}
 }
 
+func getFeatureLog(bet int, featureType int) *orm.PreprocessLog {
+	db := orm.MysqlDB()
+	if featureType == 3 {
+		data := &orm.PreprocessLog{
+			Bet:      bet,
+			FishType: "22",
+		}
+		isGet, err := db.Get(data)
+		if isGet == false || err != nil {
+			return nil
+		}
+		return data
+	} else if featureType == 4 {
+		data := &orm.PreprocessLog{
+			Bet:      bet,
+			FishType: "23",
+		}
+		isGet, err := db.Get(data)
+		if isGet == false || err != nil {
+			return nil
+		}
+		return data
+	}
+	return nil
+}
+
 //更新Prepross_Log裡面的TotalBetWin
-func updateFeatureTypeBetWin(qd *orm.PreprocessLog, totalWin int64) error {
+func updateFeatureTypeBetWin(qd *orm.PreprocessLog) error {
 	db := orm.MysqlDB()
 	data := orm.PreprocessLog{
-		TotalWin: totalWin,
+		TotalWin: ,
 	}
 	_, err := db.Id(qd.ID).Update(data)
 	if err != nil {
