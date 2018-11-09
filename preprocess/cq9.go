@@ -46,7 +46,7 @@ func ProcessCQ9Log() {
 func createPreprocessLog(data *orm.BetCluster) {
 	db := orm.MysqlDB()
 	sql := "SELECT Bet,FeatureBet,FeatureType,FishType,Result,SUM(Bet),SUM(Bet_Win),Count(Round),Count(id),Process_Status FROM `gamelog_fish` WHERE ClusterID=" +
-		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=12 or Process_Status=13 or Process_Status=14) GROUP BY Bet,FeatureBet,FeatureType,FishType,Process_Status"
+		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=12 or Process_Status=13 or Process_Status=14) GROUP BY Bet,FeatureBet,FeatureType,FishType,Process_Status,Result"
 
 	results, err := db.Query(sql)
 	if err != nil {
@@ -104,7 +104,10 @@ func createPreprocessLog(data *orm.BetCluster) {
 		} else {
 			fretureLogs := processFeatureLog(&processLog)
 			if fretureLogs != nil {
-				insertFeatureLog(fretureLogs)
+				totalWin := insertFeatureLog(fretureLogs)
+				if totalWin != processLog.TotalWin {
+					tool.Log.Errorf("TotalWin != processLog.TotalWin, totalWin=%d,  processLog.TotalWin=%d, Result:%s", totalWin, processLog.TotalWin, processLog.Result)
+				}
 			}
 		}
 	}

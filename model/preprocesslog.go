@@ -45,7 +45,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 		return nil
 	}
 	fishGamelogList := []FishGameLog{}
-	var effectTotalRound int64
+
 	for _, v := range preprocessLog {
 		fishGameLog := FishGameLog{
 			FeatureType:     v.FeatureType,
