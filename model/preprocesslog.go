@@ -59,7 +59,6 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 			DisConTimes:     v.DisConTimes,
 			DisConSettle:    v.DisConSettle,
 		}
-		effectTotalRound = effectTotalRound + v.TotalRound
 		fishGamelogList = append(fishGamelogList, fishGameLog)
 	}
 	logList := assignFratureTypeBetWin(betCluster.ClusterID, fishGamelogList)
@@ -71,7 +70,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 		LobbyID:   betCluster.LobbyID,
 		Account:   betCluster.Account,
 		Currency:  betCluster.Currency,
-		Round:     effectTotalRound, //改成有效回合數
+		Round:     getTotalRound(betCluster.ClusterID),
 		OrderBet:  betCluster.Bet,
 		Win:       getTotalWin(betCluster.ClusterID),
 		WinLose:   betCluster.WinLose,
@@ -155,6 +154,17 @@ func getTotalWin(clusterID int64) int64 {
 	totals, err := db.Where("ClusterID=?", clusterID).SumsInt(ss, "TotalWin")
 	if err != nil {
 		tool.Log.Errorf("getTotalWin failed ! ClusterID= %d", clusterID)
+		return 0
+	}
+	return totals[0]
+}
+
+func getTotalRound(clusterID int64) int64 {
+	db := orm.MysqlDB()
+	ss := new(orm.PreprocessLog)
+	totals, err := db.Where("ClusterID=?", clusterID).And("FeatureType=?", 0).SumsInt(ss, "TotalRound")
+	if err != nil {
+		tool.Log.Errorf("getTotalRound failed ! ClusterID= %d", clusterID)
 		return 0
 	}
 	return totals[0]
