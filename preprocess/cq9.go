@@ -88,9 +88,8 @@ func processNoramalBullet(data *orm.BetCluster) error {
 			DisConTimes:   0,
 			DisConSettle:  0,
 		}
-		processLog.FishType = strings.TrimLeft(processLog.FishType, "[")
-		processLog.FishType = strings.TrimRight(processLog.FishType, "]")
-		processLog.FishID = processLog.FishType
+
+		processLog.FishID = processLog.FishType[1 : len(processLog.FishType)-1]
 		insertData = append(insertData, processLog)
 	}
 	_, err = db.Insert(insertData)
@@ -141,6 +140,7 @@ func processFeatureBullet(data *orm.BetCluster) error {
 		if processLog.FishType == "" {
 			continue
 		}
+		processLog.FishType = processLog.FishType[1 : len(processLog.FishType)-1]
 		fretureLogs := processFeatureLog(&processLog)
 		if fretureLogs != nil {
 			err := batchInsert(fretureLogs)
@@ -163,6 +163,7 @@ func processFeatureLog(log *orm.PreprocessLog) map[int]map[int]orm.PreprocessLog
 		tool.Log.Errorf("Json Unmarshal failed! Error= %v , Result= %s", err, decodeResult)
 		return nil
 	}
+
 	featureLogs := map[int]map[int]orm.PreprocessLog{}
 	var fLogByFeatureBet map[int]orm.PreprocessLog //map[featureBet]orm.PreprocessLog
 	featureLogs[log.FeatureBet] = make(map[int]orm.PreprocessLog)
@@ -186,6 +187,27 @@ func processFeatureLog(log *orm.PreprocessLog) map[int]map[int]orm.PreprocessLog
 	}
 	featureLogs[log.Bet] = fLogByFeatureBet
 	return featureLogs
+}
+
+func fishWinisFitFishType(result *SaveGameLog_Fish_Feature_Hit, log *orm.PreprocessLog) bool {
+	fishWins := strings.Split(log.FishWin, ",")
+	fishTypes := strings.Split(log.FishType, ",")
+	if len(fishWins) != len(fishTypes) {
+		return false
+	}
+	index := 0
+	for _, v := range result.Kill_info {
+		if v.Status == 1 {
+			if v.Feature_type != fishTypes[index] {
+				return false
+			}
+			if strconv.Itoa(int(v.Win)) != fishWins[index] {
+				return false
+			}
+			index = index + 1
+		}
+	}
+	return true
 }
 
 func batchInsert(featureLogs map[int]map[int]orm.PreprocessLog) error {

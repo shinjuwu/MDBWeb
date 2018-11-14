@@ -13,6 +13,7 @@ type ResInfoBetDetailFishGetForCQ9 struct {
 
 type FishDetailLogCQ9 struct {
 	RoundID   string        `json:"tid"`       //單號
+	Paccount  string        `json:"paccount"`  //上層代理
 	StartTime string        `json:"startTime"` //開始時間
 	EndTime   string        `json:"endTime"`   //結束時間
 	Agent     string        `json:"agent"`     //代理商
@@ -39,7 +40,7 @@ type FishGameLog struct {
 	DisConSettle    int64  `json:"disconnectSettle"` //斷線結清
 }
 
-func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGetForCQ9 {
+func GetFishBetDetailForCQ9(betCluster *orm.BetCluster, paccount string) *ResInfoBetDetailFishGetForCQ9 {
 	preprocessLog := GetProcessLog(betCluster.ClusterID)
 	if preprocessLog == nil {
 		return nil
@@ -64,6 +65,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster) *ResInfoBetDetailFishGet
 	logList := assignFratureTypeBetWin(betCluster.ClusterID, fishGamelogList)
 	fishDetailLogCQ9 := FishDetailLogCQ9{
 		RoundID:   betCluster.RoundID,
+		Paccount:  paccount,
 		StartTime: betCluster.StartTime.String(),
 		EndTime:   betCluster.EndTime.String(),
 		Agent:     betCluster.Agent,

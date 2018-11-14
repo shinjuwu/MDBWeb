@@ -72,8 +72,12 @@ func sendMessage(context *gin.Context, httpReponse *CommonHttpResponseInfo) {
 }
 
 func getOrderInfo(context *gin.Context) interface{} {
+	var paccount string
 	token := context.Query("token")
 	detailInfo := getDetailOrderInfo(token)
+	if detailInfo.Status.Code == "0" {
+		paccount = detailInfo.Data.Paccount
+	}
 	betCluster := model.GetBetCluster(detailInfo.Data.RoundID)
 	if betCluster == nil {
 		res := &CommonHttpResponseInfo{
@@ -82,7 +86,7 @@ func getOrderInfo(context *gin.Context) interface{} {
 		}
 		return res
 	}
-	ResFishBetInfo := model.GetFishBetDetailForCQ9(betCluster)
+	ResFishBetInfo := model.GetFishBetDetailForCQ9(betCluster, paccount)
 	if len(ResFishBetInfo.BetDetail.GameLog) == 0 {
 		res := &CommonHttpResponseInfo{
 			Code:    int(sysconst.ERROR_CODE_CQ9_ORDERDETAIL_NOT_FOUND),
