@@ -31,8 +31,13 @@ func ProcessCQ9Log() {
 	err := db.Where("IsProcess = ?", 0).And("RoundID <> ?", "").Find(&betClusterList)
 	if err != nil {
 		tool.Log.Errorf("Get betcluster failed! Xorm inner failed! Error: %v", err)
+		return
 	}
-
+	err = setProcessing(betClusterList)
+	if err != nil {
+		tool.Log.Errorf("setProcessing(betClusterList) failed, Error:%v", err)
+		return
+	}
 	for _, v := range betClusterList {
 		createPreprocessLog(&v)
 		setProcessed(&v)
@@ -41,19 +46,41 @@ func ProcessCQ9Log() {
 	tool.Log.Info("CQ9 Prepross routine end.")
 }
 
-//var count int
+func ProcessCQ9LogByRoundID(betCluster *orm.BetCluster) error {
+	tool.Log.Infof("Process CQ9 Log by RoundID : %s", betCluster.RoundID)
+	logs := []orm.BetCluster{}
+	logs = append(logs, *betCluster)
+	err := setProcessing(logs)
+	if err != nil {
+		tool.Log.Errorf("setProcessing(betClusterList) failed, Error:%v", err)
+		return err
+	}
+	err = createPreprocessLog(betCluster)
+	if err != nil {
+		return err
+	}
+	err = setProcessed(betCluster)
+	if err != nil {
+		return err
+	}
+	tool.Log.Infof("Process CQ9 Log by RoundID end, RoundID = %s", betCluster.RoundID)
+	return nil
+}
 
-func createPreprocessLog(data *orm.BetCluster) {
+func createPreprocessLog(data *orm.BetCluster) error {
 	//處理一般子彈
 	err := processNoramalBullet(data)
 	if err != nil {
 		tool.Log.Errorf("ProcessNormalBullet and insert to db failed!, error=%v , betCluster Data = %v", err, data)
+		return err
 	}
 	//處理特殊子彈
 	err = processFeatureBullet(data)
 	if err != nil {
 		tool.Log.Errorf("processFeatureBullet and insert to db failed!,error=%v , betCluster Data = %v", err, data)
+		return err
 	}
+	return nil
 }
 
 //處理一般子彈
@@ -225,14 +252,28 @@ func batchInsert(featureLogs map[int]map[int]orm.PreprocessLog) error {
 	return nil
 }
 
-func setProcessed(log *orm.BetCluster) {
+func setProcessing(logs []orm.BetCluster) error {
 	db := orm.MysqlDB()
-	sql := "UPDATE bet_cluster SET IsProcess=1 WHERE ClusterID=" + strconv.Itoa(int(log.ClusterID))
+	for _, v := range logs {
+		sql := "UPDATE bet_cluster SET IsProcess=1 WHERE ClusterID=" + strconv.Itoa(int(v.ClusterID))
+		_, err := db.Query(sql)
+		if err != nil {
+			tool.Log.Errorf("Set processed failed!, Error: %v , Sql: %s", err, sql)
+			return err
+		}
+	}
+	return nil
+}
+
+func setProcessed(log *orm.BetCluster) error {
+	db := orm.MysqlDB()
+	sql := "UPDATE bet_cluster SET IsProcess=2 WHERE ClusterID=" + strconv.Itoa(int(log.ClusterID))
 	_, err := db.Query(sql)
 	if err != nil {
 		tool.Log.Errorf("Set processed failed!, Error: %v , Sql: %s", err, sql)
-		return
+		return err
 	}
+	return nil
 }
 
 func checkNoemalQueryField(v map[string][]byte) (*orm.PreprocessLog, error) {

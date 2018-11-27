@@ -4,6 +4,7 @@ import (
 	"MDBWeb/baseinfo"
 	"MDBWeb/orm"
 	"MDBWeb/sysconst"
+	"MDBWeb/tool"
 	"encoding/json"
 )
 
@@ -76,7 +77,8 @@ func GetBetCluster(roundID string) *orm.BetCluster {
 	betCluster := new(orm.BetCluster)
 	has, err := db.Where("RoundID=?", roundID).Get(betCluster)
 	if err != nil {
-		panic("GetBetCluster err")
+		tool.Log.Errorf("DB select failed! err=%+v", err)
+		return nil
 	}
 	if !has {
 		return nil

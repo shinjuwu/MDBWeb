@@ -104,7 +104,7 @@ type GamelogFish struct {
 
 type GamelogSlot struct {
 	ID                  int64     `xorm:"pk notnull autoincr"`
-	ServerID            int       `xorm:"pk notnull default(0) 'ServerID'"`
+	ServerID            int       `xorm:"notnull default(0) 'ServerID'"`
 	PlatformID          int       `xorm:"notnull 'PlatformID'"`
 	MemberCode          int       `xorm:"'MemberCode'"`
 	AgentID             int       `xorm:"'AgentID'"`

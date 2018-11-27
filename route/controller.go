@@ -3,6 +3,7 @@ package route
 import (
 	"MDBWeb/baseinfo"
 	"MDBWeb/model"
+	"MDBWeb/preprocess"
 	"MDBWeb/sysconst"
 	"MDBWeb/tool"
 	"encoding/json"
@@ -77,6 +78,12 @@ func getOrderInfo(context *gin.Context) interface{} {
 	detailInfo := getDetailOrderInfo(token)
 	if detailInfo.Status.Code == "0" {
 		paccount = detailInfo.Data.Paccount
+	} else {
+		res := &CommonHttpResponseInfo{
+			Code:    int(sysconst.ERROR_CODE_CQ9_VERIFY_ORDER_FAILED),
+			Message: "CQ9驗證注單資料失敗",
+		}
+		return res
 	}
 	betCluster := model.GetBetCluster(detailInfo.Data.RoundID)
 	if betCluster == nil {
@@ -86,13 +93,28 @@ func getOrderInfo(context *gin.Context) interface{} {
 		}
 		return res
 	}
-	ResFishBetInfo := model.GetFishBetDetailForCQ9(betCluster, paccount)
-	if len(ResFishBetInfo.BetDetail.GameLog) == 0 {
+	if betCluster.IsProcess == 1 {
 		res := &CommonHttpResponseInfo{
-			Code:    int(sysconst.ERROR_CODE_CQ9_ORDERDETAIL_NOT_FOUND),
-			Message: "找不到細單",
+			Code:    int(sysconst.ERROR_CODE_CQ9_ORDERPROCESSING),
+			Message: "即時處理中,請稍後再試",
 		}
 		return res
+	}
+	ResFishBetInfo := model.GetFishBetDetailForCQ9(betCluster, paccount)
+	if len(ResFishBetInfo.BetDetail.GameLog) == 0 {
+		err := preprocess.ProcessCQ9LogByRoundID(betCluster)
+		if err != nil {
+			tool.Log.Errorf("ProcessCQ9LogByRoundID() failed! roundID:%s , Error:%v", betCluster.RoundID, err)
+			res := &CommonHttpResponseInfo{
+				Code:    int(sysconst.ERROR_CODE_CQ9_ORDERPROCESS_FAILED),
+				Message: "即時處理注單失敗,請稍後再試",
+			}
+			return res
+		}
+		ResFishBetInfo = model.GetFishBetDetailForCQ9(betCluster, paccount) //處理完再撈一次
+		if len(ResFishBetInfo.BetDetail.GameLog) == 0 {
+			panic("Get Data is Null!") //不可能發生
+		}
 	}
 	return ResFishBetInfo
 }
@@ -237,25 +259,29 @@ func getDetailOrderInfo(token string) *ResDetailOrder {
 	formBody := ioutil.NopCloser(strings.NewReader(v.Encode()))
 	req, err := http.NewRequest("POST", "http://api.cqgame.games/gamepool/cq9/game/detailtoken", formBody)
 	if err != nil {
-		panic("error")
+		tool.Log.Errorf("Get Detail Order info from CQ9 failed cause for  http.NewRequest error! token: %s", token)
+		return nil
 	}
 	req.Header.Set("Authorization", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJnYW1laGFsbCI6ImNxOSIsInRlYW0iOiJBUCIsImp0aSI6IjUyODM4NDU1MyIsImlhdCI6MTUzNTk2NDM1OSwiaXNzIjoiQ3lwcmVzcyIsInN1YiI6IkdTVG9rZW4ifQ.OtEO9IT3ZgmeM0Kp_fjYE-MaAtGQyGFPLwvDBwbPQCI")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic("error")
+		tool.Log.Errorf("Get Detail Order info from CQ9 failed cause for  client.Do(req) error! token: %s", token)
+		return nil
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic("error")
+		tool.Log.Errorf("Get Detail Order info from CQ9 failed cause for  ioutil.ReadAll(resp.Body) error! token: %s", token)
+		return nil
 	}
 	res := ResDetailOrder{}
 	err = json.Unmarshal(body, &res)
 	if err != nil {
-		panic("error")
+		tool.Log.Errorf("Get Detail Order info from CQ9 failed cause for json.Unmarshal(body, &res) error! token: %s", token)
+		return nil
 	}
 	return &res
 }
