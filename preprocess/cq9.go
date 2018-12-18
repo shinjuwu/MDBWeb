@@ -167,6 +167,13 @@ func processFeatureBullet(data *orm.BetCluster) error {
 			DisConSettle:  disConnSettle,
 		}
 		if processLog.FishType == "" {
+			if processLog.ProcessStatus == 12 {
+				//斷線結清處理
+				_, err = db.Insert(processLog)
+				if err != nil {
+					return err
+				}
+			}
 			continue
 		}
 		processLog.FishType = processLog.FishType[1 : len(processLog.FishType)-1]
