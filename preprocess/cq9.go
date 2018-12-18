@@ -87,7 +87,7 @@ func createPreprocessLog(data *orm.BetCluster) error {
 func processNoramalBullet(data *orm.BetCluster) error {
 	db := orm.MysqlDB()
 	sql := "SELECT Bet,FeatureBet,FeatureType,FishType,SUM(Bet),SUM(Bet_Win),Count(Round),Process_Status FROM `gamelog_fish`" +
-		" WHERE ClusterID=" + strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=5 or Process_Status=13) GROUP BY Bet,FeatureBet,FeatureType,FishType,Process_Status"
+		" WHERE ClusterID=" + strconv.Itoa(int(data.ClusterID)) + " AND ServerID=" + strconv.Itoa(data.ServerID) + " AND(Process_Status=5 or Process_Status=13) GROUP BY Bet,FeatureBet,FeatureType,FishType,Process_Status"
 	results, err := db.Query(sql)
 	if err != nil {
 		tool.Log.Errorf("Query fish log failed, Sql: %s    ,func:processNoramalBullet() , Error = %v", sql, err)
@@ -102,6 +102,7 @@ func processNoramalBullet(data *orm.BetCluster) error {
 		}
 		processLog := orm.PreprocessLog{
 			ClusterID:     data.ClusterID,
+			ServerID:      data.ServerID,
 			RoundID:       data.RoundID,
 			Bet:           queryData.Bet,
 			FeatureBet:    queryData.FeatureBet,
@@ -130,7 +131,7 @@ func processNoramalBullet(data *orm.BetCluster) error {
 func processFeatureBullet(data *orm.BetCluster) error {
 	db := orm.MysqlDB()
 	sql := "SELECT Bet,FeatureBet,FeatureType,FishType,Bet_Win,Round,Process_Status,Result FROM gamelog_fish WHERE ClusterID=" +
-		strconv.Itoa(int(data.ClusterID)) + " AND(Process_Status=12 or Process_Status=14)"
+		strconv.Itoa(int(data.ClusterID)) + " AND ServerID=" + strconv.Itoa(data.ServerID) + " AND(Process_Status=12 or Process_Status=14)"
 	results, err := db.Query(sql)
 	if err != nil {
 		tool.Log.Errorf("Query fish log failed, Sql: %s    ,func:processFeatureBullet() , Error = %v", sql, err)
@@ -151,6 +152,7 @@ func processFeatureBullet(data *orm.BetCluster) error {
 		}
 		processLog := orm.PreprocessLog{
 			ClusterID:     data.ClusterID,
+			ServerID:      data.ServerID,
 			RoundID:       data.RoundID,
 			Bet:           queryData.Bet,
 			FeatureBet:    queryData.FeatureBet,
@@ -255,7 +257,7 @@ func batchInsert(featureLogs map[int]map[int]orm.PreprocessLog) error {
 func setProcessing(logs []orm.BetCluster) error {
 	db := orm.MysqlDB()
 	for _, v := range logs {
-		sql := "UPDATE bet_cluster SET IsProcess=1 WHERE ClusterID=" + strconv.Itoa(int(v.ClusterID))
+		sql := "UPDATE bet_cluster SET IsProcess=1 WHERE ClusterID=" + strconv.Itoa(int(v.ClusterID)) + " AND ServerID=" + strconv.Itoa(v.ServerID)
 		_, err := db.Query(sql)
 		if err != nil {
 			tool.Log.Errorf("Set processed failed!, Error: %v , Sql: %s", err, sql)
@@ -267,7 +269,7 @@ func setProcessing(logs []orm.BetCluster) error {
 
 func setProcessed(log *orm.BetCluster) error {
 	db := orm.MysqlDB()
-	sql := "UPDATE bet_cluster SET IsProcess=2 WHERE ClusterID=" + strconv.Itoa(int(log.ClusterID))
+	sql := "UPDATE bet_cluster SET IsProcess=2 WHERE ClusterID=" + strconv.Itoa(int(log.ClusterID)) + " AND ServerID=" + strconv.Itoa(log.ServerID)
 	_, err := db.Query(sql)
 	if err != nil {
 		tool.Log.Errorf("Set processed failed!, Error: %v , Sql: %s", err, sql)

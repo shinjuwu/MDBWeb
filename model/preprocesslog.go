@@ -3,6 +3,7 @@ package model
 import (
 	"MDBWeb/orm"
 	"MDBWeb/tool"
+	"fmt"
 	"strconv"
 )
 
@@ -41,7 +42,7 @@ type FishGameLog struct {
 }
 
 func GetFishBetDetailForCQ9(betCluster *orm.BetCluster, paccount string) *ResInfoBetDetailFishGetForCQ9 {
-	preprocessLog := GetProcessLog(betCluster.ClusterID)
+	preprocessLog := GetProcessLog(betCluster.ClusterID, betCluster.ServerID)
 	if preprocessLog == nil {
 		return nil
 	}
@@ -62,7 +63,7 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster, paccount string) *ResInf
 		}
 		fishGamelogList = append(fishGamelogList, fishGameLog)
 	}
-	logList := assignFratureTypeBetWin(betCluster.ClusterID, fishGamelogList)
+	logList := assignFratureTypeBetWin(betCluster.ClusterID, betCluster.ServerID, fishGamelogList)
 	fishDetailLogCQ9 := FishDetailLogCQ9{
 		RoundID:   betCluster.RoundID,
 		Paccount:  paccount,
@@ -72,9 +73,9 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster, paccount string) *ResInf
 		LobbyID:   betCluster.LobbyID,
 		Account:   betCluster.Account,
 		Currency:  betCluster.Currency,
-		Round:     getTotalRound(betCluster.ClusterID),
+		Round:     getTotalRound(betCluster.ClusterID, betCluster.ServerID),
 		OrderBet:  betCluster.Bet,
-		Win:       getTotalWin(betCluster.ClusterID),
+		Win:       getTotalWin(betCluster.ClusterID, betCluster.ServerID),
 		WinLose:   betCluster.WinLose,
 		GameLog:   logList,
 	}
@@ -84,11 +85,12 @@ func GetFishBetDetailForCQ9(betCluster *orm.BetCluster, paccount string) *ResInf
 	return res
 }
 
-func GetProcessLog(clusterID int64) []orm.PreprocessLog {
+func GetProcessLog(clusterID int64, serverID int) []orm.PreprocessLog {
 	db := orm.MysqlDB()
 	preprocessLog := make([]orm.PreprocessLog, 0)
 	sql := "SELECT Bet,FeatureBet,FeatureType,FishID,SUM(TotalFeatureHit),SUM(TotalRound),SUM(TotalBet),SUM(TotalWin),dis_con_times,dis_con_settle FROM `preprocess_log` WHERE ClusterID=" +
-		strconv.Itoa(int(clusterID)) + " GROUP BY Bet,FeatureBet,FeatureType,FishID"
+		strconv.Itoa(int(clusterID)) + " AND ServerID=" + strconv.Itoa(serverID) + " GROUP BY Bet,FeatureBet,FeatureType,FishID"
+	fmt.Println(sql)
 	results, err := db.Query(sql)
 	if err != nil {
 		tool.Log.Errorf("GetProcessLog error, sql= %s", sql)
@@ -123,15 +125,15 @@ func GetProcessLog(clusterID int64) []orm.PreprocessLog {
 	return preprocessLog
 }
 
-func assignFratureTypeBetWin(clusterID int64, logList []FishGameLog) []FishGameLog {
+func assignFratureTypeBetWin(clusterID int64, serverID int, logList []FishGameLog) []FishGameLog {
 	for k, v := range logList {
 		if v.FeatureType == 0 && v.FishID == "22" {
-			totalWin := getSumOfFeatureWin(clusterID, 3, 14)
+			totalWin := getSumOfFeatureWin(clusterID, 3, 14, serverID)
 			v.TotalWin = totalWin
 			logList[k] = v
 		}
 		if v.FeatureType == 0 && v.FishID == "23" {
-			totalWin := getSumOfFeatureWin(clusterID, 4, 14)
+			totalWin := getSumOfFeatureWin(clusterID, 4, 14, serverID)
 			v.TotalWin = totalWin
 			logList[k] = v
 		}
@@ -139,10 +141,10 @@ func assignFratureTypeBetWin(clusterID int64, logList []FishGameLog) []FishGameL
 	return logList
 }
 
-func getSumOfFeatureWin(clusterID int64, featureType int, ps int) int64 {
+func getSumOfFeatureWin(clusterID int64, featureType int, ps int, serverID int) int64 {
 	db := orm.MysqlDB()
 	ss := new(orm.PreprocessLog)
-	totals, err := db.Where("ClusterID=?", clusterID).And("FeatureType=?", featureType).And("Process_Status=?", ps).SumsInt(ss, "TotalWin")
+	totals, err := db.Where("ClusterID=?", clusterID).And("ServerID=?", serverID).And("FeatureType=?", featureType).And("Process_Status=?", ps).SumsInt(ss, "TotalWin")
 	if err != nil {
 		tool.Log.Errorf("getSumOfFeatureWin failed ! ClusterID= %d", clusterID)
 		return 0
@@ -150,10 +152,10 @@ func getSumOfFeatureWin(clusterID int64, featureType int, ps int) int64 {
 	return totals[0]
 }
 
-func getTotalWin(clusterID int64) int64 {
+func getTotalWin(clusterID int64, serverID int) int64 {
 	db := orm.MysqlDB()
 	ss := new(orm.PreprocessLog)
-	totals, err := db.Where("ClusterID=?", clusterID).SumsInt(ss, "TotalWin")
+	totals, err := db.Where("ClusterID=?", clusterID).And("ServerID=?", serverID).SumsInt(ss, "TotalWin")
 	if err != nil {
 		tool.Log.Errorf("getTotalWin failed ! ClusterID= %d", clusterID)
 		return 0
@@ -161,10 +163,10 @@ func getTotalWin(clusterID int64) int64 {
 	return totals[0]
 }
 
-func getTotalRound(clusterID int64) int64 {
+func getTotalRound(clusterID int64, serverID int) int64 {
 	db := orm.MysqlDB()
 	ss := new(orm.PreprocessLog)
-	totals, err := db.Where("ClusterID=?", clusterID).And("FeatureType=?", 0).SumsInt(ss, "TotalRound")
+	totals, err := db.Where("ClusterID=?", clusterID).And("ServerID=?", serverID).And("FeatureType=?", 0).SumsInt(ss, "TotalRound")
 	if err != nil {
 		tool.Log.Errorf("getTotalRound failed ! ClusterID= %d", clusterID)
 		return 0

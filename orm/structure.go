@@ -98,6 +98,7 @@ type GamelogFish struct {
 	ProcessStatus       int       `xorm:"notnull 'Process_Status'"`
 	FeatureType         int       `xorm:"notnull default(0) 'FeatureType'"`
 	FishType            string    `xorm:"varchar(200) notnull default('0') 'FishType'"`
+	FishWin             string    `xorm:"varchar(400) notnull default('0') 'FishWin'"`
 	Result              string    `xorm:"varchar(4000) notnull 'Result'"`
 	Memo                string    `xorm:"varchar(100)"`
 }
@@ -148,6 +149,7 @@ type Platforminfo struct {
 type PreprocessLog struct {
 	ID              int64  `xorm:"pk notnull autoincr"`
 	ClusterID       int64  `xorm:"index notnull 'ClusterID'"`
+	ServerID        int    `xorm:"notnull default(0) 'ServerID'"`
 	RoundID         string `xorm:"notnull varchar(45) 'RoundID'"`
 	Bet             int    `xorm:"notnull default(0) 'Bet'"`
 	FeatureBet      int    `xorm:"notnull default(0) 'FeatureBet'"`
