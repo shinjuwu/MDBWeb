@@ -136,7 +136,7 @@ func assignFratureTypeBetWin(clusterID int64, serverID int, logList []FishGameLo
 			logList[k] = v
 		}
 		if v.FeatureType == 0 && v.FishID == "23" {
-			totalWin := getSumOfFeatureWin(clusterID, 4, 14, serverID, v.FeatureBet)
+			totalWin := getSumOfFeatureWin(clusterID, 4, 14, serverID, v.Bet)
 			v.TotalWin = totalWin
 			logList[k] = v
 		}
