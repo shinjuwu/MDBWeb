@@ -147,7 +147,7 @@ func assignFratureTypeBetWin(clusterID int64, serverID int, logList []FishGameLo
 func getSumOfFeatureWin(clusterID int64, featureType int, ps int, serverID int, featureBet int) int64 {
 	db := orm.MysqlDB()
 	ss := new(orm.PreprocessLog)
-	totals, err := db.Where("ClusterID=?", clusterID).And("ServerID=?", serverID).And("FeatureBet=?", featureBet).And("FeatureType=?", featureType).And("Process_Status=?", ps).SumsInt(ss, "TotalWin")
+	totals, err := db.Where("ClusterID=?", clusterID).And("ServerID=?", serverID).And("FeatureBet=?", featureBet).And("FeatureType=?", featureType).And("Process_Status=? OR Process_Status=12", ps).SumsInt(ss, "TotalWin")
 	if err != nil {
 		tool.Log.Errorf("getSumOfFeatureWin failed ! ClusterID= %d", clusterID)
 		return 0
